@@ -40,23 +40,8 @@ public class SSLTLSScanner implements ScannerModule {
         ScannerResult result = new ScannerResult(getModuleId());
 
         String host = targetUri.getHost();
-        int port = targetUri.getPort() != -1 ? targetUri.getPort() : (targetUri.getScheme().equalsIgnoreCase("https") ? 443 : 80);
-
-        if (!targetUri.getScheme().equalsIgnoreCase("https") && port == 80) {
-            result.addVulnerability(new Vulnerability(
-                    scan,
-                    "Insecure Plaintext HTTP Protocol Used",
-                    "The target application is accessible via unencrypted plain HTTP (port 80). Transmitted data, including login credentials and session tokens, can be intercepted in transit.",
-                    Severity.HIGH,
-                    VulnerabilityCategory.SSL_TLS,
-                    "CWE-319",
-                    "Enforce HTTPS across the entire domain, obtain a valid TLS certificate, and redirect all HTTP traffic to HTTPS.",
-                    "Scheme: http://" + host,
-                    targetUri.toString()
-            ));
-            result.addMetadata("sslValid", false);
-            return result;
-        }
+        int requestedPort = targetUri.getPort() != -1 ? targetUri.getPort() : (targetUri.getScheme().equalsIgnoreCase("https") ? 443 : 80);
+        int targetPort = (requestedPort == 80) ? 443 : requestedPort;
 
         try {
             // Establish an SSL handshake and inspect session
@@ -73,7 +58,7 @@ public class SSLTLSScanner implements ScannerModule {
             SSLSocketFactory factory = sc.getSocketFactory();
 
             try (SSLSocket socket = (SSLSocket) factory.createSocket()) {
-                socket.connect(new InetSocketAddress(host, port), 6000);
+                socket.connect(new InetSocketAddress(host, targetPort), 6000);
                 socket.setSoTimeout(6000);
                 socket.startHandshake();
 
@@ -85,6 +70,20 @@ public class SSLTLSScanner implements ScannerModule {
                 result.addMetadata("tlsVersion", protocol);
                 result.addMetadata("cipherSuite", cipherSuite);
                 result.addMetadata("sslValid", true);
+
+                if (requestedPort == 80) {
+                    result.addVulnerability(new Vulnerability(
+                            scan,
+                            "Initial Target Specified Plain HTTP (Upgraded to HTTPS 443)",
+                            "The initial request was submitted as plaintext HTTP, but the host supports secure HTTPS on port 443.",
+                            Severity.INFO,
+                            VulnerabilityCategory.SSL_TLS,
+                            "CWE-319",
+                            "Enforce 301 Permanent Redirect from HTTP port 80 to HTTPS port 443 across all subdomains.",
+                            "Scheme: http://" + host + " -> Upgraded to https://" + host,
+                            targetUri.toString()
+                    ));
+                }
 
                 // 1. Check TLS Protocol Version
                 if ("TLSv1".equalsIgnoreCase(protocol) || "TLSv1.1".equalsIgnoreCase(protocol) || "SSLv3".equalsIgnoreCase(protocol)) {
@@ -213,10 +212,24 @@ public class SSLTLSScanner implements ScannerModule {
             }
 
         } catch (Exception e) {
-            log.error("SSL/TLS scan failed for {}:{}: {}", host, port, e.getMessage());
+            log.error("SSL/TLS scan failed for {}:{}: {}", host, targetPort, e.getMessage());
             result.setSuccess(false);
             result.setErrorMessage("SSL handshake failed: " + e.getMessage());
             result.addMetadata("sslValid", false);
+
+            if (requestedPort == 80) {
+                result.addVulnerability(new Vulnerability(
+                        scan,
+                        "Insecure Plaintext HTTP Protocol Used (No HTTPS Available)",
+                        "The target application is accessible via unencrypted plain HTTP (port 80) and refused an HTTPS connection on port 443.",
+                        Severity.HIGH,
+                        VulnerabilityCategory.SSL_TLS,
+                        "CWE-319",
+                        "Enforce HTTPS across the entire domain, obtain a valid TLS certificate, and redirect all HTTP traffic to HTTPS.",
+                        "Scheme: http://" + host,
+                        targetUri.toString()
+                ));
+            }
         }
 
         return result;

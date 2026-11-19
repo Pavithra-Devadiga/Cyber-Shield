@@ -46,7 +46,7 @@ public class EndpointExposureScanner implements ScannerModule {
             String contentSignature
     ) {}
 
-    // Strict probe endpoints for true exposure (robots.txt is excluded as it is standard crawler metadata, not a vulnerability)
+    // Strict probe endpoints for true exposure
     private static final List<ProbeEndpoint> PROBES = List.of(
             new ProbeEndpoint(
                     "/.env",
@@ -101,6 +101,15 @@ public class EndpointExposureScanner implements ScannerModule {
                     "CWE-200",
                     "Restrict API documentation endpoints behind authentication in production.",
                     "\"openapi\":"
+            ),
+            new ProbeEndpoint(
+                    "/robots.txt",
+                    "Robots.txt Crawler Directives Detected",
+                    "The website provides a robots.txt file to guide search engine crawlers. This is standard RFC web crawling guidance and is evaluated for informational awareness.",
+                    Severity.INFO,
+                    "CWE-200",
+                    "Review robots.txt to ensure it does not reveal sensitive private directories.",
+                    "Disallow:"
             ),
             new ProbeEndpoint(
                     "/.DS_Store",

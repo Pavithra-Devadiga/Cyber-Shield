@@ -9,6 +9,7 @@ import com.security.scanner.repository.NotificationRepository;
 import com.security.scanner.repository.ScanRepository;
 import com.security.scanner.scanner.ScannerModule;
 import com.security.scanner.scanner.ScannerResult;
+import com.security.scanner.util.SafeHttpClientFactory;
 import com.security.scanner.util.SsrfProtectionValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,23 +31,27 @@ public class ScanOrchestratorService {
     private final NotificationRepository notificationRepository;
     private final SsrfProtectionValidator ssrfValidator;
     private final SecurityScoreService scoreService;
+    private final SafeHttpClientFactory clientFactory;
 
     public ScanOrchestratorService(
             List<ScannerModule> scannerModules,
             ScanRepository scanRepository,
             NotificationRepository notificationRepository,
             SsrfProtectionValidator ssrfValidator,
-            SecurityScoreService scoreService
+            SecurityScoreService scoreService,
+            SafeHttpClientFactory clientFactory
     ) {
         this.scannerModules = scannerModules;
         this.scanRepository = scanRepository;
         this.notificationRepository = notificationRepository;
         this.ssrfValidator = ssrfValidator;
         this.scoreService = scoreService;
+        this.clientFactory = clientFactory;
     }
 
     /**
      * Executes the scan workflow synchronously or via background task.
+     * Follows redirects upfront so all modules evaluate the canonical target (e.g. google.com -> https://www.google.com/).
      */
     @Transactional
     public void executeScan(Long scanId, List<String> requestedModules) {
@@ -61,9 +66,19 @@ public class ScanOrchestratorService {
             // 1. SSRF Validation
             URI targetUri = ssrfValidator.validateAndNormalize(scan.getTargetUrl());
 
-            // 2. Select Active Scanner Modules
+            // 2. Discover Canonical Destination by Following Redirects (e.g. google.com -> https://www.google.com/)
+            SafeHttpClientFactory.TargetResolution resolution = clientFactory.resolveTarget(targetUri);
+            URI effectiveUri = resolution.finalUri() != null ? resolution.finalUri() : targetUri;
+
+            if (resolution.redirected()) {
+                log.info("Scan #{}: Target redirected {} -> {} ({} hops)",
+                        scan.getId(), targetUri, effectiveUri, resolution.redirectChain().size());
+            }
+
+            // 3. Select Active Scanner Modules
             List<ScannerModule> activeModules = selectModules(scan.getScanType(), requestedModules);
-            log.info("Executing scan #{} against {} with {} modules", scan.getId(), targetUri, activeModules.size());
+            log.info("Executing scan #{} against canonical {} with {} modules",
+                    scan.getId(), effectiveUri, activeModules.size());
 
             List<Vulnerability> allVulnerabilities = new ArrayList<>();
             Set<String> technologies = new LinkedHashSet<>();
@@ -71,7 +86,7 @@ public class ScanOrchestratorService {
             for (ScannerModule module : activeModules) {
                 try {
                     log.debug("Running module '{}' for scan #{}", module.getModuleId(), scan.getId());
-                    ScannerResult res = module.scan(targetUri, scan);
+                    ScannerResult res = module.scan(effectiveUri, scan);
 
                     if (res != null && res.getVulnerabilities() != null) {
                         for (Vulnerability v : res.getVulnerabilities()) {
@@ -105,7 +120,7 @@ public class ScanOrchestratorService {
                 scan.setTechnologiesFound(String.join(", ", technologies));
             }
 
-            // 3. Compute Security Score
+            // 4. Compute Security Score using accurate severity weighting
             SecurityScoreService.ScoreResult scoreResult = scoreService.calculateScore(allVulnerabilities);
             scan.setSecurityScore(scoreResult.score());
             scan.setLetterGrade(scoreResult.grade());
@@ -113,7 +128,7 @@ public class ScanOrchestratorService {
             scan.setEndTime(LocalDateTime.now());
             scanRepository.save(scan);
 
-            // 4. Create Notification
+            // 5. Create Notification
             if (scan.getUser() != null) {
                 Notification notif = new Notification(
                         scan.getUser(),
