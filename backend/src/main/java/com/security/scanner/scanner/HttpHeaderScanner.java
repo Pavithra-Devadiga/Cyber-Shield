@@ -151,6 +151,18 @@ public class HttpHeaderScanner implements ScannerModule {
                             finalUri.toString()
                     ));
                 }
+            } else {
+                result.addVulnerability(new Vulnerability(
+                        scan,
+                        "Missing HTTP Strict Transport Security (HSTS) - Insecure HTTP Session",
+                        "The application operates over unencrypted HTTP. HSTS cannot be established over insecure HTTP connections, leaving return visitors exposed to SSL stripping and protocol downgrade attacks.",
+                        Severity.MEDIUM,
+                        VulnerabilityCategory.SECURITY_HEADERS,
+                        "CWE-319",
+                        "Migrate application to HTTPS and configure 'Strict-Transport-Security: max-age=31536000; includeSubDomains'.",
+                        "Session operates on plain HTTP (HSTS unavailable)",
+                        finalUri.toString()
+                ));
             }
 
             // -------------------------------------------------------------------------
@@ -199,7 +211,7 @@ public class HttpHeaderScanner implements ScannerModule {
                         scan,
                         "Missing Content-Security-Policy (CSP) Header",
                         "The application does not declare a Content-Security-Policy header. Configuring CSP provides defense-in-depth against client-side injection and unauthorized script execution.",
-                        Severity.LOW,
+                        Severity.MEDIUM,
                         VulnerabilityCategory.SECURITY_HEADERS,
                         "CWE-693",
                         "Configure a Content-Security-Policy header restricting script-src, style-src, default-src, and object-src directives.",

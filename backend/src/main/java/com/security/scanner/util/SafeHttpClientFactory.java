@@ -40,10 +40,11 @@ public class SafeHttpClientFactory {
             HttpHeaders headers,
             String body,
             boolean crossDomainRedirect,
-            String externalRedirectHost
+            String externalRedirectHost,
+            boolean isParkedDomain
     ) {
         public boolean isReachable() {
-            return statusCode > 0 && statusCode != 404 && statusCode != 405 && statusCode != 410 && statusCode < 500 && !crossDomainRedirect;
+            return statusCode > 0 && statusCode != 404 && statusCode != 405 && statusCode != 410 && statusCode < 500 && !crossDomainRedirect && !isParkedDomain;
         }
     }
 
@@ -179,6 +180,11 @@ public class SafeHttpClientFactory {
             log.warn("Target resolution failed for {}: {}", targetUri, e.getMessage());
         }
 
+        boolean isParked = isParkedOrPlaceholder(finalBody, targetUri.getHost());
+        if (isParked) {
+            log.warn("Target {} detected as inactive parked domain or placeholder", targetUri);
+        }
+
         return new TargetResolution(
                 targetUri,
                 currentUri,
@@ -189,8 +195,44 @@ public class SafeHttpClientFactory {
                 finalHeaders,
                 finalBody,
                 crossDomainRedirect,
-                externalRedirectHost
+                externalRedirectHost,
+                isParked
         );
+    }
+
+    /**
+     * Detects parked domains, dead landers (e.g. window.location.href="/lander"),
+     * and parking service placeholders that do not host a real web application.
+     */
+    public static boolean isParkedOrPlaceholder(String body, String host) {
+        if (body == null || body.trim().isEmpty()) return false;
+        String lower = body.toLowerCase().trim();
+
+        // 1. Instant parking lander redirects (like pavi.com: window.location.href="/lander")
+        if (lower.contains("location.href=\"/lander\"") || lower.contains("location.href = \"/lander\"")
+                || lower.contains("location.href='/lander'") || lower.contains("location.href = '/lander'")
+                || lower.contains("location.replace(\"/lander\")") || lower.contains("location.replace('/lander')")
+                || lower.contains("/lander") && lower.contains("window.location")) {
+            return true;
+        }
+
+        // 2. Extremely tiny stub body (< 220 chars) containing redirect scripts to lander/parking
+        if (lower.length() < 220 && (lower.contains("window.location") || lower.contains("document.location") || lower.contains("window.onload"))) {
+            if (lower.contains("lander") || lower.contains("parking") || lower.contains("redirect") || lower.contains("domain")) {
+                return true;
+            }
+        }
+
+        // 3. Known domain parking signatures
+        if (lower.contains("sedoparking.com") || lower.contains("parkingcrew.net") || lower.contains("bodis.com")
+                || lower.contains("domain is for sale") || lower.contains("buy this domain")
+                || lower.contains("this domain may be for sale") || lower.contains("parked free, courtesy of")
+                || lower.contains("domain has been registered") || lower.contains("domain name is parked")
+                || lower.contains("hugedomains.com") || lower.contains("dan.com/buy-domain")) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

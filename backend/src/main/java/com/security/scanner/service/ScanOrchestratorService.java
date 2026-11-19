@@ -69,7 +69,12 @@ public class ScanOrchestratorService {
             // 2. Discover Canonical Destination by Following Redirects (e.g. google.com -> https://www.google.com/)
             SafeHttpClientFactory.TargetResolution resolution = clientFactory.resolveTarget(targetUri);
             if (!resolution.isReachable()) {
-                if (resolution.crossDomainRedirect()) {
+                if (resolution.isParkedDomain()) {
+                    throw new com.security.scanner.exception.TargetNotFoundException(
+                            targetUri.getHost(),
+                            "Target website does not exist: '" + targetUri.getHost() + "' is an inactive parked domain placeholder with no web application."
+                    );
+                } else if (resolution.crossDomainRedirect()) {
                     throw new com.security.scanner.exception.TargetNotFoundException(
                             targetUri.getHost(),
                             "Target website does not host an active site: '" + targetUri.getHost() + "' redirects off-site to external domain '" + resolution.externalRedirectHost() + "'."
@@ -137,6 +142,12 @@ public class ScanOrchestratorService {
 
             if (!technologies.isEmpty()) {
                 scan.setTechnologiesFound(String.join(", ", technologies));
+            }
+
+            // Enforce plaintext HTTP telemetry override if target does not redirect to HTTPS
+            if (effectiveUri.getScheme().equalsIgnoreCase("http") && !resolution.httpToHttpsRedirected()) {
+                scan.setSslValid(false);
+                scan.setTlsVersion("None (Plaintext HTTP)");
             }
 
             // 4. Compute Security Score using accurate severity weighting

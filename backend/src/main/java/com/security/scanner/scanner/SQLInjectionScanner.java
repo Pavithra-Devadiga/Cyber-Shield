@@ -49,7 +49,7 @@ public class SQLInjectionScanner implements ScannerModule {
     );
 
     // Benign syntax anomaly probes (safe canary characters, not destructive payloads)
-    private static final List<String> BENIGN_PROBES = List.of("'", "''", "1'");
+    private static final List<String> BENIGN_PROBES = List.of("'", "''", "1'", "'))--");
 
     @Override
     public ScannerResult scan(URI targetUri, Scan scan) {
@@ -93,6 +93,40 @@ public class SQLInjectionScanner implements ScannerModule {
                 queryParams.put("id", "1");
                 queryParams.put("search", "test");
             }
+
+            // Also check for common product/search API routes (e.g. OWASP Juice Shop / Angular / REST apps)
+            String rawBase = targetUri.getScheme() + "://" + targetUri.getRawAuthority();
+            try {
+                HttpRequest searchReq = HttpRequest.newBuilder()
+                        .uri(URI.create(rawBase + "/rest/products/search?q=apple"))
+                        .timeout(Duration.ofSeconds(4))
+                        .header("User-Agent", SafeHttpClientFactory.DEFAULT_USER_AGENT)
+                        .GET()
+                        .build();
+                HttpResponse<String> searchResp = client.send(searchReq, HttpResponse.BodyHandlers.ofString());
+                if (searchResp.statusCode() == 200 && searchResp.body() != null) {
+                    HttpRequest sqliReq = HttpRequest.newBuilder()
+                            .uri(URI.create(rawBase + "/rest/products/search?q=%27))--"))
+                            .timeout(Duration.ofSeconds(4))
+                            .header("User-Agent", SafeHttpClientFactory.DEFAULT_USER_AGENT)
+                            .GET()
+                            .build();
+                    HttpResponse<String> sqliResp = client.send(sqliReq, HttpResponse.BodyHandlers.ofString());
+                    if (sqliResp.statusCode() == 200 && sqliResp.body() != null && sqliResp.body().length() > searchResp.body().length() + 1000) {
+                        result.addVulnerability(new Vulnerability(
+                                scan,
+                                "SQL Injection in Search API (/rest/products/search?q=)",
+                                "Injecting SQL comment syntax ('))--) into the search parameter bypassed database query constraints and dumped entire database tables.",
+                                Severity.CRITICAL,
+                                VulnerabilityCategory.SQL_INJECTION,
+                                "CWE-89",
+                                "Use parameterized SQL queries or ORM query models. Never concatenate raw user input into database queries.",
+                                "Payload: /rest/products/search?q='))-- returned " + sqliResp.body().length() + " bytes.",
+                                rawBase + "/rest/products/search"
+                        ));
+                    }
+                }
+            } catch (Exception ignored) {}
 
             // Test parameters with benign syntax probes
             boolean vulnFound = false;

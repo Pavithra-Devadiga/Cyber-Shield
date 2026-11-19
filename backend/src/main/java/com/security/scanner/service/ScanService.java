@@ -58,7 +58,12 @@ public class ScanService {
         // 2. Pre-flight Verification: Check if target website actually exists and serves web traffic
         com.security.scanner.util.SafeHttpClientFactory.TargetResolution probe = clientFactory.resolveTarget(targetUri);
         if (!probe.isReachable()) {
-            if (probe.crossDomainRedirect()) {
+            if (probe.isParkedDomain()) {
+                throw new com.security.scanner.exception.TargetNotFoundException(
+                        targetUri.getHost(),
+                        "Target website does not exist: '" + targetUri.getHost() + "' is an inactive parked domain placeholder with no web application."
+                );
+            } else if (probe.crossDomainRedirect()) {
                 throw new com.security.scanner.exception.TargetNotFoundException(
                         targetUri.getHost(),
                         "Target website does not host an active site: '" + targetUri.getHost() + "' redirects off-site to external domain '" + probe.externalRedirectHost() + "'."
@@ -118,9 +123,12 @@ public class ScanService {
                     scan.setEndpointsTested(0);
                     scan.setSslValid(false);
                     scan.setTlsVersion("None");
-                    scan.setErrorMessage(probe.crossDomainRedirect()
+                    String err = probe.isParkedDomain()
+                            ? "Target website does not exist: '" + uri.getHost() + "' is an inactive parked domain placeholder with no web application."
+                            : probe.crossDomainRedirect()
                             ? "Target website does not host an active site: '" + uri.getHost() + "' redirects to external domain '" + probe.externalRedirectHost() + "'."
-                            : "Target website does not exist or has no active web application (HTTP " + probe.statusCode() + ").");
+                            : "Target website does not exist or has no active web application (HTTP " + probe.statusCode() + ").";
+                    scan.setErrorMessage(err);
                     scan = scanRepository.save(scan);
                 }
             } catch (Exception ignored) {

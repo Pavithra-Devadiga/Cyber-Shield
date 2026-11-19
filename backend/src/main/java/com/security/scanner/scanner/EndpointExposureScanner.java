@@ -49,6 +49,15 @@ public class EndpointExposureScanner implements ScannerModule {
     // Strict probe endpoints for true exposure
     private static final List<ProbeEndpoint> PROBES = List.of(
             new ProbeEndpoint(
+                    "/ftp",
+                    "Exposed Directory Listing & File Storage (/ftp)",
+                    "The /ftp directory has public directory listing enabled, allowing anyone to view, browse, and download application files.",
+                    Severity.HIGH,
+                    "CWE-548",
+                    "Disable directory indexing in web server configuration and restrict /ftp behind authentication.",
+                    "listing directory"
+            ),
+            new ProbeEndpoint(
                     "/.env",
                     "Exposed Environment Configuration File (.env)",
                     "A .env file was discovered publicly accessible. This file frequently contains database passwords, API credentials, encryption secrets, and private tokens.",

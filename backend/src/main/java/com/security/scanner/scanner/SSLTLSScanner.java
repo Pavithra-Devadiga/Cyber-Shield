@@ -42,6 +42,60 @@ public class SSLTLSScanner implements ScannerModule {
         String host = targetUri.getHost();
         int requestedPort = targetUri.getPort() != -1 ? targetUri.getPort() : (targetUri.getScheme().equalsIgnoreCase("https") ? 443 : 80);
         int targetPort = (requestedPort == 80) ? 443 : requestedPort;
+        boolean isPlainHttp = targetUri.getScheme().equalsIgnoreCase("http");
+        boolean autoRedirectsToHttps = false;
+
+        // Check if port 80 automatically redirects to HTTPS
+        if (isPlainHttp) {
+            try {
+                java.net.http.HttpClient testClient = java.net.http.HttpClient.newBuilder()
+                        .followRedirects(java.net.http.HttpClient.Redirect.NEVER)
+                        .connectTimeout(java.time.Duration.ofSeconds(4))
+                        .build();
+                java.net.http.HttpRequest testReq = java.net.http.HttpRequest.newBuilder()
+                        .uri(targetUri)
+                        .timeout(java.time.Duration.ofSeconds(4))
+                        .header("User-Agent", "CyberSecurityAuditor/2.0")
+                        .GET()
+                        .build();
+                java.net.http.HttpResponse<Void> testResp = testClient.send(testReq, java.net.http.HttpResponse.BodyHandlers.discarding());
+                int st = testResp.statusCode();
+                if ((st == 301 || st == 302 || st == 307 || st == 308) && testResp.headers().firstValue("location").isPresent()) {
+                    String loc = testResp.headers().firstValue("location").get().toLowerCase();
+                    if (loc.startsWith("https://")) {
+                        autoRedirectsToHttps = true;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (isPlainHttp && !autoRedirectsToHttps) {
+            result.addVulnerability(new Vulnerability(
+                    scan,
+                    "Unencrypted Plaintext HTTP Traffic Allowed (No HTTPS Enforcement)",
+                    "The web application allows access over unencrypted HTTP (port 80) without automatically redirecting traffic to HTTPS. All user sessions, cookies, credentials, and transmitted data can be intercepted or modified by unauthorized third parties via network eavesdropping and Man-In-The-Middle (MITM) attacks.",
+                    Severity.HIGH,
+                    VulnerabilityCategory.SSL_TLS,
+                    "CWE-319",
+                    "Configure an automatic 301/308 Permanent Redirect on port 80 to redirect all HTTP traffic to https://" + host + " and deploy HSTS.",
+                    "Scheme: http://" + host + " serves traffic directly without HTTPS redirect.",
+                    targetUri.toString()
+            ));
+            result.addMetadata("sslValid", false);
+            result.addMetadata("tlsVersion", "None (Plaintext HTTP)");
+        } else if (isPlainHttp && autoRedirectsToHttps) {
+            result.addVulnerability(new Vulnerability(
+                    scan,
+                    "Initial Request Plain HTTP (Automatic Redirect to HTTPS)",
+                    "The initial request was submitted over plaintext HTTP, and the web server automatically redirected traffic to secure HTTPS.",
+                    Severity.INFO,
+                    VulnerabilityCategory.SSL_TLS,
+                    "CWE-319",
+                    "Maintain permanent 301 redirects and deploy HSTS preloading.",
+                    "Scheme: http://" + host + " -> Redirects to HTTPS",
+                    targetUri.toString()
+            ));
+        }
 
         try {
             // Establish an SSL handshake and inspect session
@@ -67,22 +121,10 @@ public class SSLTLSScanner implements ScannerModule {
                 String cipherSuite = session.getCipherSuite();
                 Certificate[] certs = session.getPeerCertificates();
 
-                result.addMetadata("tlsVersion", protocol);
-                result.addMetadata("cipherSuite", cipherSuite);
-                result.addMetadata("sslValid", true);
-
-                if (requestedPort == 80) {
-                    result.addVulnerability(new Vulnerability(
-                            scan,
-                            "Initial Target Specified Plain HTTP (Upgraded to HTTPS 443)",
-                            "The initial request was submitted as plaintext HTTP, but the host supports secure HTTPS on port 443.",
-                            Severity.INFO,
-                            VulnerabilityCategory.SSL_TLS,
-                            "CWE-319",
-                            "Enforce 301 Permanent Redirect from HTTP port 80 to HTTPS port 443 across all subdomains.",
-                            "Scheme: http://" + host + " -> Upgraded to https://" + host,
-                            targetUri.toString()
-                    ));
+                if (!isPlainHttp || autoRedirectsToHttps) {
+                    result.addMetadata("tlsVersion", protocol);
+                    result.addMetadata("cipherSuite", cipherSuite);
+                    result.addMetadata("sslValid", true);
                 }
 
                 // 1. Check TLS Protocol Version
@@ -212,21 +254,21 @@ public class SSLTLSScanner implements ScannerModule {
             }
 
         } catch (Exception e) {
-            log.error("SSL/TLS scan failed for {}:{}: {}", host, targetPort, e.getMessage());
-            result.setSuccess(false);
-            result.setErrorMessage("SSL handshake failed: " + e.getMessage());
+            log.warn("SSL/TLS scan port 443 failed for {}: {}", host, e.getMessage());
+            result.setSuccess(true);
             result.addMetadata("sslValid", false);
+            result.addMetadata("tlsVersion", isPlainHttp ? "None (Plaintext HTTP)" : "None");
 
-            if (requestedPort == 80) {
+            if (!isPlainHttp) {
                 result.addVulnerability(new Vulnerability(
                         scan,
-                        "Insecure Plaintext HTTP Protocol Used (No HTTPS Available)",
-                        "The target application is accessible via unencrypted plain HTTP (port 80) and refused an HTTPS connection on port 443.",
+                        "SSL/TLS Service Unreachable or Certificate Error",
+                        "The target host failed to complete a TLS handshake on port 443: " + e.getMessage(),
                         Severity.HIGH,
                         VulnerabilityCategory.SSL_TLS,
-                        "CWE-319",
-                        "Enforce HTTPS across the entire domain, obtain a valid TLS certificate, and redirect all HTTP traffic to HTTPS.",
-                        "Scheme: http://" + host,
+                        "CWE-295",
+                        "Configure a valid SSL/TLS certificate and ensure port 443 is open and listening.",
+                        "Handshake failure: " + e.getMessage(),
                         targetUri.toString()
                 ));
             }
