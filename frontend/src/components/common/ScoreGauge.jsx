@@ -10,9 +10,9 @@ export default function ScoreGauge({ score, grade, size = 'md' }) {
       case 'A':
         return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10 stroke-emerald-500';
       case 'B':
-        return 'text-amber-400 border-amber-500/30 bg-amber-500/10 stroke-amber-500';
+        return 'text-sky-400 border-sky-500/30 bg-sky-500/10 stroke-sky-500';
       case 'C':
-        return 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10 stroke-yellow-500';
+        return 'text-amber-400 border-amber-500/30 bg-amber-500/10 stroke-amber-500';
       case 'D':
         return 'text-orange-400 border-orange-500/30 bg-orange-500/10 stroke-orange-500';
       default:
@@ -35,7 +35,7 @@ export default function ScoreGauge({ score, grade, size = 'md' }) {
             cx="50"
             cy="50"
             r={radius}
-            className="stroke-stone-800"
+            className="stroke-blue-950/80"
             strokeWidth={isSmall ? '8' : '7'}
             fill="transparent"
           />
@@ -53,25 +53,25 @@ export default function ScoreGauge({ score, grade, size = 'md' }) {
           />
         </svg>
 
-        <div className="absolute flex flex-col items-center justify-center">
-          <span className={`font-bold tracking-tight text-stone-100 ${isSmall ? 'text-sm' : 'text-xl'}`}>
-            {score !== null && score !== undefined ? score : '--'}
+        {/* Center label */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className={`font-mono font-black text-white ${isSmall ? 'text-xs' : 'text-xl'}`}>
+            {numericScore}
           </span>
-          {!isSmall && <span className="text-[10px] text-stone-400 uppercase font-medium">/ 100</span>}
+          {!isSmall && <span className="text-[9px] uppercase tracking-wider text-blue-300/60 font-semibold">Score</span>}
         </div>
       </div>
 
+      {/* Grade badge */}
       {grade && (
         <div className="flex flex-col">
-          <span className="text-xs text-stone-400 uppercase tracking-wider font-semibold">Security Grade</span>
-          <div className="flex items-baseline gap-1.5 mt-0.5">
-            <span className={`text-2xl font-extrabold px-2.5 py-0.5 rounded-md border ${getGradeColor(grade)}`}>
-              {grade}
-            </span>
-            <span className="text-xs text-stone-400 font-medium">
-              {numericScore >= 85 ? 'Strong Posture' : numericScore >= 60 ? 'Needs Attention' : 'High Risk'}
-            </span>
-          </div>
+          <span
+            className={`inline-flex items-center justify-center font-black rounded-xl border ${
+              isSmall ? 'w-8 h-8 text-xs' : 'w-12 h-12 text-base'
+            } ${getGradeColor(grade).split(' ').slice(0, 3).join(' ')}`}
+          >
+            {grade}
+          </span>
         </div>
       )}
     </div>

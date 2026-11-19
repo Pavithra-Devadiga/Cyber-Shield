@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Shield,
+  ArrowRight,
 } from 'lucide-react';
 
 export default function NotificationsPage() {
@@ -65,7 +67,7 @@ export default function NotificationsPage() {
       case 'ERROR':
         return <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />;
       default:
-        return <Info className="w-5 h-5 text-stone-400 shrink-0" />;
+        return <Info className="w-5 h-5 text-sky-400 shrink-0" />;
     }
   };
 
@@ -73,76 +75,80 @@ export default function NotificationsPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-stone-100 tracking-tight">Security Alerts & Notifications</h2>
-          <p className="text-stone-400 text-sm mt-1">
+          <h2 className="text-2xl font-bold text-white tracking-tight">Security Alerts & Notifications</h2>
+          <p className="text-blue-300/70 text-sm mt-1">
             Real-time audit updates, scan status alerts, and vulnerability escalation warnings.
           </p>
         </div>
-
         <button
           onClick={handleMarkAllAsRead}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 hover:text-stone-100 text-xs font-semibold transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0d162e] border border-blue-900/60 hover:bg-blue-900/30 text-blue-200 text-xs font-semibold transition-colors shadow-sm"
         >
-          <CheckCheck className="w-4 h-4 text-amber-400" />
-          Mark All as Read
+          <CheckCheck className="w-4 h-4 text-sky-400" />
+          Mark All Read
         </button>
       </div>
 
-      <div className="rounded-2xl bg-stone-900/90 border border-stone-800 overflow-hidden shadow-xl">
-        <div className="divide-y divide-stone-800/80">
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400" />
-            </div>
-          ) : notifications.length === 0 ? (
-            <div className="text-center py-12 text-stone-400 text-sm">
-              No notifications at this time.
-            </div>
-          ) : (
-            notifications.map((n) => (
+      <div className="rounded-2xl bg-[#0d162e] border border-blue-900/40 overflow-hidden shadow-xl">
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sky-400" />
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="text-center py-16 text-slate-400 text-sm space-y-2">
+            <Bell className="w-8 h-8 text-blue-500/40 mx-auto" />
+            <p className="font-semibold text-white">No notifications recorded</p>
+            <p className="text-xs text-blue-300/60">Audit progress and security triggers will be logged here.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-blue-950/60">
+            {notifications.map((n) => (
               <div
                 key={n.id}
-                className={`p-5 flex items-start gap-4 transition-colors ${
-                  n.isRead ? 'opacity-70 bg-stone-950/20' : 'bg-stone-900/50 hover:bg-stone-900'
+                className={`p-5 flex items-start justify-between gap-4 transition-colors ${
+                  n.isRead ? 'bg-transparent' : 'bg-blue-950/20'
                 }`}
               >
-                {getTypeIcon(n.type)}
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-sm text-stone-100">{n.title}</span>
-                    <span className="text-[11px] text-stone-400 font-mono">
-                      {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                    </span>
+                <div className="flex items-start gap-4">
+                  {getTypeIcon(n.type)}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-white">{n.title}</h4>
+                      {!n.isRead && (
+                        <span className="w-2 h-2 rounded-full bg-sky-400" />
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">{n.message}</p>
+                    <div className="flex items-center gap-3 pt-1 text-[11px] text-blue-300/60">
+                      <span>{new Date(n.createdAt).toLocaleTimeString()}</span>
+                      {n.scanId && (
+                        <Link
+                          to={`/scans/${n.scanId}`}
+                          className="text-sky-400 hover:underline flex items-center gap-1 font-semibold"
+                        >
+                          View Scan #{n.scanId} <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs text-stone-400 leading-relaxed">{n.message}</p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {!n.isRead && (
-                    <button
-                      onClick={() => handleMarkAsRead(n.id)}
-                      className="px-2.5 py-1 text-xs rounded-lg border border-stone-800 hover:bg-stone-800 text-stone-300 transition-colors"
-                    >
-                      Mark read
-                    </button>
-                  )}
-                  {n.scanId && (
-                    <Link
-                      to={`/scans/${n.scanId}`}
-                      className="p-1.5 text-stone-400 hover:text-amber-400"
-                      title="View Scan"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </Link>
-                  )}
-                </div>
+                {!n.isRead && (
+                  <button
+                    onClick={() => handleMarkAsRead(n.id)}
+                    className="p-1.5 rounded-lg text-blue-300/60 hover:text-white hover:bg-blue-900/30 transition-colors shrink-0"
+                    title="Mark as read"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
         {totalPages > 1 && (
-          <div className="p-4 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400">
+          <div className="p-4 border-t border-blue-950 flex items-center justify-between text-xs text-blue-300/70">
             <span>
               Page {page + 1} of {totalPages}
             </span>
@@ -150,14 +156,14 @@ export default function NotificationsPage() {
               <button
                 disabled={page === 0}
                 onClick={() => setPage(page - 1)}
-                className="p-1.5 rounded-lg border border-stone-800 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+                className="p-1.5 rounded-lg border border-blue-900/60 bg-[#091126] hover:bg-blue-900/30 text-blue-300 disabled:opacity-40 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage(page + 1)}
-                className="p-1.5 rounded-lg border border-stone-800 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+                className="p-1.5 rounded-lg border border-blue-900/60 bg-[#091126] hover:bg-blue-900/30 text-blue-300 disabled:opacity-40 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

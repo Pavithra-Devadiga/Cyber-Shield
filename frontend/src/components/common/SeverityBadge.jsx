@@ -14,7 +14,7 @@ export default function SeverityBadge({ severity, showIcon = true, size = 'sm' }
       icon: AlertTriangle,
     },
     MEDIUM: {
-      bg: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+      bg: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
       icon: AlertCircle,
     },
     LOW: {
@@ -22,7 +22,7 @@ export default function SeverityBadge({ severity, showIcon = true, size = 'sm' }
       icon: Info,
     },
     INFO: {
-      bg: 'bg-stone-800 text-stone-300 border-stone-700',
+      bg: 'bg-blue-950/80 text-blue-300 border-blue-900/50',
       icon: Info,
     },
   };

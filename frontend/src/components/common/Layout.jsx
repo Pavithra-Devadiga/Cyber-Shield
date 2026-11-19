@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import api from '../../api/client';
 
@@ -15,7 +16,7 @@ export default function Layout() {
           setUnreadCount(res.data.data.unreadCount || 0);
         }
       } catch {
-        // Ignore offline or quiet errors
+        // Ignore offline errors
       }
     };
 
@@ -24,29 +25,28 @@ export default function Layout() {
     return () => clearInterval(interval);
   }, [location.pathname]);
 
+  const getPageTitle = (path) => {
+    if (path.startsWith('/scans/new')) return 'Launch Security Audit';
+    if (path.startsWith('/scans/')) return 'Audit Findings & Telemetry';
+    if (path === '/scans') return 'Audit History & Evaluations';
+    if (path === '/vulnerabilities') return 'Identified Vulnerabilities Catalog';
+    if (path === '/reports') return 'Compliance & PDF Reports';
+    if (path === '/notifications') return 'Audit Alerts & Notifications';
+    return 'Security Posture Dashboard';
+  };
+
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col selection:bg-amber-500/30 selection:text-amber-200 font-['Plus_Jakarta_Sans',sans-serif]">
-      {/* Sleek Top Navigation Bar */}
-      <Navbar unreadCount={unreadCount} />
+    <div className="flex min-h-screen bg-[#0b1329] text-slate-100 selection:bg-blue-600/30 selection:text-blue-200 font-['Plus_Jakarta_Sans',sans-serif]">
+      {/* Spacious Side Navigation Bar */}
+      <Sidebar unreadCount={unreadCount} />
 
-      {/* Main Page Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Outlet />
-      </main>
-
-      {/* Aesthetic Academic Project Footer */}
-      <footer className="border-t border-stone-800/80 py-6 text-xs text-stone-400 bg-stone-950/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-          <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
-            <span className="font-bold text-stone-200">CyberShield</span>
-            <span className="text-stone-600">&bull;</span>
-            <span className="text-stone-400">Cybersecurity Project &bull; Summer Internship II</span>
-          </div>
-          <div className="text-stone-400">
-            Developer: <strong className="text-amber-400 font-semibold">Pavithra</strong> (Reg No: <span className="font-mono text-stone-300">U25UV24T064028</span>)
-          </div>
-        </div>
-      </footer>
+      {/* Main App Container */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <Navbar title={getPageTitle(location.pathname)} />
+        <main className="flex-1 p-8 lg:p-10 overflow-y-auto max-w-7xl w-full">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

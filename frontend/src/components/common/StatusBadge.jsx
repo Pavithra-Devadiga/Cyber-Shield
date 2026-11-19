@@ -6,12 +6,12 @@ export default function StatusBadge({ status }) {
 
   const config = {
     QUEUED: {
-      bg: 'bg-stone-800 text-stone-300 border-stone-700',
+      bg: 'bg-blue-950/80 text-blue-300 border-blue-800/50',
       icon: Clock,
       label: 'Queued',
     },
     RUNNING: {
-      bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+      bg: 'bg-blue-600/20 text-sky-300 border-sky-400/40',
       icon: Loader2,
       label: 'Auditing...',
       spin: true,
@@ -27,7 +27,7 @@ export default function StatusBadge({ status }) {
       label: 'Failed',
     },
     CANCELLED: {
-      bg: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+      bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
       icon: Ban,
       label: 'Cancelled',
     },

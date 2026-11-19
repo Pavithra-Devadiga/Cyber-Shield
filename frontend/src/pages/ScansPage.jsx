@@ -12,7 +12,8 @@ import {
   Ban,
   ChevronLeft,
   ChevronRight,
-  Database,
+  Shield,
+  Layers,
 } from 'lucide-react';
 
 export default function ScansPage() {
@@ -62,34 +63,35 @@ export default function ScansPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-stone-100 tracking-tight">Vulnerability Scan History</h2>
-          <p className="text-stone-400 text-sm mt-1">
+          <h2 className="text-2xl font-bold text-white tracking-tight">Security Audit History</h2>
+          <p className="text-blue-300/70 text-sm mt-1">
             Real-time tracking of security audits, automated findings, and posture grades.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={fetchScans}
-            className="p-2.5 rounded-xl border border-stone-800 bg-stone-900 text-stone-400 hover:text-stone-100 transition-colors"
+            className="p-2.5 rounded-xl border border-blue-900/60 bg-[#0d162e] text-blue-300 hover:text-white hover:border-blue-700 transition-colors shadow-sm"
             title="Refresh List"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <Link
             to="/scans/new"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-sm transition-all shadow-md shadow-amber-500/20 active:scale-95"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-600/30 active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
-            New Audit
+            <span>New Audit</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>
 
       {/* Scans Table */}
-      <div className="rounded-2xl bg-stone-900/90 border border-stone-800 overflow-hidden shadow-xl">
+      <div className="rounded-2xl bg-[#0d162e] border border-blue-900/40 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-stone-950/70 text-stone-400 text-xs uppercase tracking-wider font-semibold border-b border-stone-800">
+            <thead className="bg-[#091126] text-blue-300/70 text-xs uppercase tracking-wider font-semibold border-b border-blue-950">
               <tr>
                 <th className="py-4 px-6">ID</th>
                 <th className="py-4 px-6">Target Domain</th>
@@ -100,41 +102,41 @@ export default function ScansPage() {
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-800/80 text-stone-200">
+            <tbody className="divide-y divide-blue-950/60 text-slate-200">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400" />
+                  <td colSpan={7} className="text-center py-16">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-sky-400" />
                   </td>
                 </tr>
               ) : scans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-stone-400 text-sm space-y-2">
-                    <Database className="w-6 h-6 text-stone-500 mx-auto mb-2 opacity-50" />
-                    <p className="font-semibold text-stone-300">No scans found in database</p>
-                    <p className="text-xs text-stone-400">Launch your first live audit using the button above.</p>
+                  <td colSpan={7} className="text-center py-16 text-slate-400 text-sm space-y-2">
+                    <Shield className="w-8 h-8 text-blue-500/40 mx-auto mb-2" />
+                    <p className="font-semibold text-white">No security audits recorded yet</p>
+                    <p className="text-xs text-blue-300/60">Launch your first live audit using the button above.</p>
                   </td>
                 </tr>
               ) : (
                 scans.map((scan) => (
-                  <tr key={scan.id} className="hover:bg-stone-800/40 transition-colors">
-                    <td className="py-4 px-6 font-mono text-xs text-stone-400 font-semibold">
+                  <tr key={scan.id} className="hover:bg-blue-950/30 transition-colors">
+                    <td className="py-4 px-6 font-mono text-xs text-sky-400 font-semibold">
                       #{scan.id}
                     </td>
-                    <td className="py-4 px-6 font-medium text-stone-100 max-w-xs truncate">
+                    <td className="py-4 px-6 font-medium text-white max-w-xs truncate">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{scan.targetUrl}</span>
                         <a
                           href={scan.targetUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-stone-400 hover:text-amber-400 transition-colors"
+                          className="text-slate-500 hover:text-sky-400 transition-colors"
                         >
                           <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                         </a>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-xs text-stone-400 font-mono">
+                    <td className="py-4 px-6 text-xs text-blue-300/70 font-mono">
                       {scan.scanType}
                     </td>
                     <td className="py-4 px-6">
@@ -150,11 +152,11 @@ export default function ScansPage() {
                             const count = scan.vulnerabilities.filter((v) => v.severity === sev).length;
                             if (count === 0) return null;
                             const colors = {
-                              CRITICAL: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
-                              HIGH: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-                              MEDIUM: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-                              LOW: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-                              INFO: 'bg-stone-800 text-stone-300 border-stone-700',
+                              CRITICAL: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+                              HIGH: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
+                              MEDIUM: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+                              LOW: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+                              INFO: 'bg-blue-950/80 text-blue-300 border-blue-900/50',
                             };
                             return (
                               <span
@@ -167,7 +169,7 @@ export default function ScansPage() {
                           })}
                         </div>
                       ) : (
-                        <span className="text-xs text-stone-400">0 findings</span>
+                        <span className="text-xs text-slate-400">0 findings</span>
                       )}
                     </td>
                     <td className="py-4 px-6 text-right">
@@ -175,7 +177,7 @@ export default function ScansPage() {
                         {(scan.status === 'RUNNING' || scan.status === 'QUEUED') && (
                           <button
                             onClick={(e) => handleCancel(scan.id, e)}
-                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/15 transition-colors"
                             title="Cancel Scan"
                           >
                             <Ban className="w-4 h-4" />
@@ -183,7 +185,7 @@ export default function ScansPage() {
                         )}
                         <Link
                           to={`/scans/${scan.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:underline"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-sky-400 hover:text-sky-300 hover:underline"
                         >
                           Inspect
                           <ArrowRight className="w-3 h-3" />
@@ -199,7 +201,7 @@ export default function ScansPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400">
+          <div className="p-4 border-t border-blue-950 flex items-center justify-between text-xs text-blue-300/70">
             <span>
               Page {page + 1} of {totalPages}
             </span>
@@ -207,14 +209,14 @@ export default function ScansPage() {
               <button
                 disabled={page === 0}
                 onClick={() => setPage(page - 1)}
-                className="p-1.5 rounded-lg border border-stone-800 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+                className="p-1.5 rounded-lg border border-blue-900/60 bg-[#091126] hover:bg-blue-900/30 text-blue-300 disabled:opacity-40 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 disabled={page >= totalPages - 1}
                 onClick={() => setPage(page + 1)}
-                className="p-1.5 rounded-lg border border-stone-800 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+                className="p-1.5 rounded-lg border border-blue-900/60 bg-[#091126] hover:bg-blue-900/30 text-blue-300 disabled:opacity-40 transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
