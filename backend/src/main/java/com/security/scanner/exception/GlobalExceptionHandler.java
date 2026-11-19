@@ -21,6 +21,15 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
+    @ExceptionHandler(TargetNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTargetNotFound(TargetNotFoundException ex) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Website Does Not Exist: Unable to resolve domain '" + ex.getHost() + "'. Please verify the spelling or check if the website is active.",
+                Map.of("host", ex.getHost(), "errorType", "DOMAIN_NOT_FOUND")
+        );
+    }
+
     @ExceptionHandler(SsrfValidationException.class)
     public ResponseEntity<Map<String, Object>> handleSsrf(SsrfValidationException ex) {
         return buildResponse(HttpStatus.BAD_REQUEST, "SSRF Security Violation: " + ex.getMessage(), null);

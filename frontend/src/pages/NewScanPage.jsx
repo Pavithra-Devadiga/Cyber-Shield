@@ -122,9 +122,12 @@ export default function NewScanPage() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm flex items-center gap-3">
-          <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400" />
-          <span>{error}</span>
+        <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-100 text-sm flex items-start gap-3 shadow-lg">
+          <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400 mt-0.5" />
+          <div>
+            <strong className="block font-bold text-white mb-0.5">Target Verification Failed</strong>
+            <span>{error}</span>
+          </div>
         </div>
       )}
 

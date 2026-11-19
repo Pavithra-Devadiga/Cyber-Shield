@@ -224,8 +224,12 @@ export default function DashboardPage() {
           </form>
 
           {quickError && (
-            <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-300/40 text-rose-100 text-xs">
-              {quickError}
+            <div className="p-4 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-100 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
+              <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="block font-bold text-white mb-0.5">Target Verification Failed</strong>
+                <span>{quickError}</span>
+              </div>
             </div>
           )}
         </div>

@@ -146,7 +146,15 @@ public class ScanOrchestratorService {
         } catch (Exception e) {
             log.error("Scan #{} failed: {}", scan.getId(), e.getMessage(), e);
             scan.setStatus(ScanStatus.FAILED);
-            scan.setErrorMessage(e.getMessage());
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "Unknown execution error";
+            if (e instanceof com.security.scanner.exception.TargetNotFoundException tnf) {
+                errorMsg = "Target website does not exist: Unable to resolve domain '" + tnf.getHost() + "'.";
+            } else if (errorMsg.contains("UnknownHostException") || errorMsg.contains("Unable to resolve DNS")) {
+                errorMsg = "Target website does not exist or is offline (DNS lookup failed).";
+            } else if (errorMsg.contains("Connection refused") || errorMsg.contains("ConnectException")) {
+                errorMsg = "Target server is offline or refused connection on web ports (80/443).";
+            }
+            scan.setErrorMessage(errorMsg);
             scan.setEndTime(LocalDateTime.now());
             scanRepository.save(scan);
 

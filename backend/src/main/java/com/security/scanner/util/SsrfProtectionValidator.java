@@ -1,6 +1,7 @@
 package com.security.scanner.util;
 
 import com.security.scanner.exception.SsrfValidationException;
+import com.security.scanner.exception.TargetNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -130,7 +131,7 @@ public class SsrfProtectionValidator {
                 }
             }
         } catch (UnknownHostException e) {
-            throw new SsrfValidationException("Unable to resolve DNS for host: " + host);
+            throw new TargetNotFoundException(host);
         }
     }
 

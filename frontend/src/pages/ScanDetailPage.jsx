@@ -234,6 +234,26 @@ export default function ScanDetailPage() {
         </div>
       </div>
 
+      {/* Audit Failure / Non-Existent Target Warning */}
+      {scan.status === 'FAILED' && (
+        <div className="p-6 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-white space-y-2 shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-rose-500/25 text-rose-300 border border-rose-400/30">
+              <AlertCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-rose-200">Target Resolution Failed</h3>
+              <p className="text-sm text-slate-200 mt-0.5 font-medium">
+                {scan.errorMessage || 'Target website does not exist or is offline.'}
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-rose-200/70 pl-12">
+            The scanner could not establish a connection. Verify the URL spelling and check if the domain is registered and accessible over the internet.
+          </p>
+        </div>
+      )}
+
       {/* Primary Overview Cards (Spacious, Uncongested) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Score & Posture Box */}
