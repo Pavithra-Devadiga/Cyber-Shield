@@ -33,24 +33,48 @@ public class ScanService {
     private final UserRepository userRepository;
     private final ScanOrchestratorService orchestratorService;
     private final SsrfProtectionValidator ssrfValidator;
+    private final com.security.scanner.util.SafeHttpClientFactory clientFactory;
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     public ScanService(
             ScanRepository scanRepository,
             UserRepository userRepository,
             ScanOrchestratorService orchestratorService,
-            SsrfProtectionValidator ssrfValidator
+            SsrfProtectionValidator ssrfValidator,
+            com.security.scanner.util.SafeHttpClientFactory clientFactory
     ) {
         this.scanRepository = scanRepository;
         this.userRepository = userRepository;
         this.orchestratorService = orchestratorService;
         this.ssrfValidator = ssrfValidator;
+        this.clientFactory = clientFactory;
     }
 
     @Transactional
     public ScanResponse initiateScan(ScanRequest request) {
-        // Validate target URL against SSRF policy immediately
-        ssrfValidator.validateAndNormalize(request.getTargetUrl());
+        // 1. Validate target URL against SSRF policy immediately
+        java.net.URI targetUri = ssrfValidator.validateAndNormalize(request.getTargetUrl());
+
+        // 2. Pre-flight Verification: Check if target website actually exists and serves web traffic
+        com.security.scanner.util.SafeHttpClientFactory.TargetResolution probe = clientFactory.resolveTarget(targetUri);
+        if (!probe.isReachable()) {
+            if (probe.crossDomainRedirect()) {
+                throw new com.security.scanner.exception.TargetNotFoundException(
+                        targetUri.getHost(),
+                        "Target website does not host an active site: '" + targetUri.getHost() + "' redirects off-site to external domain '" + probe.externalRedirectHost() + "'."
+                );
+            } else if (probe.statusCode() == 0) {
+                throw new com.security.scanner.exception.TargetNotFoundException(
+                        targetUri.getHost(),
+                        "Target website does not exist or is offline: Unable to connect to '" + targetUri.getHost() + "'."
+                );
+            } else {
+                throw new com.security.scanner.exception.TargetNotFoundException(
+                        targetUri.getHost(),
+                        "Target website does not exist or has no active web application: '" + targetUri.getHost() + "' returned HTTP status " + probe.statusCode() + "."
+                );
+            }
+        }
 
         User currentUser = getCurrentUser();
         Scan scan = new Scan(request.getTargetUrl(), request.getScanType(), currentUser);
@@ -72,10 +96,36 @@ public class ScanService {
         return new PageImpl<>(responses, pageable, scans.getTotalElements());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ScanDetailResponse getScanDetails(Long scanId) {
         Scan scan = scanRepository.findById(scanId)
                 .orElseThrow(() -> new ResourceNotFoundException("Scan not found with id: " + scanId));
+
+        // Sanity guard for historical scans: verify target actually hosts an active site
+        if (scan.getStatus() == ScanStatus.COMPLETED && scan.getTargetUrl() != null) {
+            try {
+                String targetStr = scan.getTargetUrl().trim();
+                if (!targetStr.startsWith("http://") && !targetStr.startsWith("https://")) {
+                    targetStr = "https://" + targetStr;
+                }
+                java.net.URI uri = java.net.URI.create(targetStr);
+                com.security.scanner.util.SafeHttpClientFactory.TargetResolution probe = clientFactory.resolveTarget(uri);
+                if (!probe.isReachable()) {
+                    scan.setStatus(ScanStatus.FAILED);
+                    scan.setSecurityScore(0);
+                    scan.setLetterGrade("F");
+                    scan.setHeadersAnalyzed(0);
+                    scan.setEndpointsTested(0);
+                    scan.setSslValid(false);
+                    scan.setTlsVersion("None");
+                    scan.setErrorMessage(probe.crossDomainRedirect()
+                            ? "Target website does not host an active site: '" + uri.getHost() + "' redirects to external domain '" + probe.externalRedirectHost() + "'."
+                            : "Target website does not exist or has no active web application (HTTP " + probe.statusCode() + ").");
+                    scan = scanRepository.save(scan);
+                }
+            } catch (Exception ignored) {
+            }
+        }
 
         return mapToScanDetailResponse(scan);
     }

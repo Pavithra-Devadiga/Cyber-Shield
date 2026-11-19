@@ -38,8 +38,14 @@ public class SafeHttpClientFactory {
             boolean httpToHttpsRedirected,
             int statusCode,
             HttpHeaders headers,
-            String body
-    ) {}
+            String body,
+            boolean crossDomainRedirect,
+            String externalRedirectHost
+    ) {
+        public boolean isReachable() {
+            return statusCode > 0 && statusCode != 404 && statusCode != 405 && statusCode != 410 && statusCode < 500 && !crossDomainRedirect;
+        }
+    }
 
     /**
      * Builds a standard secure Java HttpClient with timeouts and automatic redirect policy.
@@ -83,14 +89,16 @@ public class SafeHttpClientFactory {
     /**
      * Resolves the canonical target by explicitly following redirects step-by-step (up to 10 hops).
      * Discovers HTTP to HTTPS upgrades, canonical domain normalization (e.g. google.com -> www.google.com),
+     * prevents cross-domain redirect hijacking (e.g. pavithra.com -> google.com),
      * and captures the final response headers, body, and status code.
      */
     public TargetResolution resolveTarget(URI targetUri) {
-        HttpClient client = createPermissiveSslClient();
         URI currentUri = targetUri;
         List<String> redirectChain = new ArrayList<>();
         boolean redirected = false;
         boolean httpToHttps = false;
+        boolean crossDomainRedirect = false;
+        String externalRedirectHost = null;
 
         HttpHeaders finalHeaders = null;
         int finalStatusCode = 0;
@@ -112,7 +120,27 @@ public class SafeHttpClientFactory {
                         .sslContext(createPermissiveSslClient().sslContext())
                         .build();
 
-                HttpResponse<String> response = noRedirectClient.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response;
+                try {
+                    response = noRedirectClient.send(request, HttpResponse.BodyHandlers.ofString());
+                } catch (Exception ex) {
+                    // If HTTPS failed on initial attempt, check HTTP fallback on the same host
+                    if (hop == 0 && "https".equalsIgnoreCase(currentUri.getScheme())) {
+                        URI fallbackHttp = URI.create("http://" + currentUri.getRawAuthority() + currentUri.getRawPath());
+                        log.debug("HTTPS probe failed for {}, trying HTTP fallback: {}", currentUri, ex.getMessage());
+                        HttpRequest httpFallbackReq = HttpRequest.newBuilder()
+                                .uri(fallbackHttp)
+                                .timeout(Duration.ofSeconds(connectTimeoutSeconds))
+                                .header("User-Agent", DEFAULT_USER_AGENT)
+                                .GET()
+                                .build();
+                        response = noRedirectClient.send(httpFallbackReq, HttpResponse.BodyHandlers.ofString());
+                        currentUri = fallbackHttp;
+                    } else {
+                        throw ex;
+                    }
+                }
+
                 int status = response.statusCode();
                 finalHeaders = response.headers();
                 finalStatusCode = status;
@@ -127,6 +155,15 @@ public class SafeHttpClientFactory {
 
                     redirectChain.add(currentUri + " -> " + nextUri + " (" + status + ")");
 
+                    // Check if redirect stays on the same site/domain
+                    if (!isSameOrSubdomain(targetUri.getHost(), nextUri.getHost())) {
+                        log.warn("Blocked cross-domain redirect from target {} to external domain {}", currentUri, nextUri);
+                        crossDomainRedirect = true;
+                        externalRedirectHost = nextUri.getHost();
+                        // DO NOT follow redirects to external 3rd-party domains!
+                        break;
+                    }
+
                     if (currentUri.getScheme().equalsIgnoreCase("http") && nextUri.getScheme().equalsIgnoreCase("https")) {
                         httpToHttps = true;
                     }
@@ -139,7 +176,7 @@ public class SafeHttpClientFactory {
                 }
             }
         } catch (Exception e) {
-            log.warn("Redirect resolution ended or failed for {}: {}", targetUri, e.getMessage());
+            log.warn("Target resolution failed for {}: {}", targetUri, e.getMessage());
         }
 
         return new TargetResolution(
@@ -150,7 +187,28 @@ public class SafeHttpClientFactory {
                 httpToHttps,
                 finalStatusCode,
                 finalHeaders,
-                finalBody
+                finalBody,
+                crossDomainRedirect,
+                externalRedirectHost
         );
+    }
+
+    /**
+     * Checks if two hosts belong to the same base domain or subdomain hierarchy.
+     */
+    public static boolean isSameOrSubdomain(String host1, String host2) {
+        if (host1 == null || host2 == null) return false;
+        String h1 = host1.toLowerCase().trim();
+        String h2 = host2.toLowerCase().trim();
+        if (h1.equals(h2)) return true;
+
+        String base1 = h1.startsWith("www.") ? h1.substring(4) : h1;
+        String base2 = h2.startsWith("www.") ? h2.substring(4) : h2;
+        if (base1.equals(base2)) return true;
+
+        if (h2.endsWith("." + base1)) return true;
+        if (h1.endsWith("." + base2)) return true;
+
+        return false;
     }
 }

@@ -23,9 +23,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TargetNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleTargetNotFound(TargetNotFoundException ex) {
+        String msg = ex.getMessage() != null ? ex.getMessage()
+                : "Website Does Not Exist: Unable to resolve domain '" + ex.getHost() + "'. Please verify the spelling or check if the website is active.";
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
-                "Website Does Not Exist: Unable to resolve domain '" + ex.getHost() + "'. Please verify the spelling or check if the website is active.",
+                msg,
                 Map.of("host", ex.getHost(), "errorType", "DOMAIN_NOT_FOUND")
         );
     }

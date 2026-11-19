@@ -7,6 +7,7 @@ import ScoreGauge from '../components/common/ScoreGauge';
 import {
   FileDown,
   ArrowLeft,
+  ArrowRight,
   ExternalLink,
   ShieldAlert,
   Search,
@@ -234,25 +235,61 @@ export default function ScanDetailPage() {
         </div>
       </div>
 
-      {/* Audit Failure / Non-Existent Target Warning */}
-      {scan.status === 'FAILED' && (
-        <div className="p-6 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-white space-y-2 shadow-xl">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-rose-500/25 text-rose-300 border border-rose-400/30">
-              <AlertCircle className="w-5 h-5" />
+      {/* If Scan Failed / Target Does Not Exist */}
+      {scan.status === 'FAILED' ? (
+        <div className="p-8 sm:p-10 rounded-3xl bg-[#0d162e] border border-rose-500/40 text-white space-y-6 shadow-2xl">
+          <div className="flex items-start gap-4">
+            <div className="p-4 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 shrink-0">
+              <AlertCircle className="w-8 h-8" />
             </div>
-            <div>
-              <h3 className="font-bold text-base text-rose-200">Target Resolution Failed</h3>
-              <p className="text-sm text-slate-200 mt-0.5 font-medium">
-                {scan.errorMessage || 'Target website does not exist or is offline.'}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
+                  Target Resolution Failed
+                </span>
+                <span className="text-xs text-slate-400 font-mono">
+                  Audit #{scan.id}
+                </span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-white">
+                Website Does Not Exist or Serves No Active Web Application
+              </h3>
+              <p className="text-sm text-rose-200/90 leading-relaxed font-mono bg-[#091126] p-4 rounded-xl border border-rose-950/60 break-words">
+                {scan.errorMessage || 'Unable to connect to target host. The domain does not resolve or returned an inactive status.'}
               </p>
             </div>
           </div>
-          <p className="text-xs text-rose-200/70 pl-12">
-            The scanner could not establish a connection. Verify the URL spelling and check if the domain is registered and accessible over the internet.
-          </p>
+
+          <div className="p-5 rounded-2xl bg-[#091126] border border-blue-900/40 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-blue-300">
+              Why was no security score or telemetry generated?
+            </h4>
+            <ul className="text-xs text-slate-300 space-y-2 list-disc list-inside leading-relaxed">
+              <li>The target domain may not be registered, or public DNS could not find an active web server.</li>
+              <li>The server refused connections on standard web ports (80/443) or returned an error (HTTP 404/405).</li>
+              <li>The domain redirected off-site to an external third party without hosting its own web content.</li>
+              <li>To maintain integrity and prevent false reporting, CyberShield does not evaluate inactive targets.</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <Link
+              to="/scans/new"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-blue-600/30 transition-all active:scale-95"
+            >
+              <span>Audit Another Website</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/dashboard"
+              className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl bg-[#091126] hover:bg-blue-950/60 border border-blue-900/40 text-blue-300 hover:text-white text-xs sm:text-sm font-semibold transition-all"
+            >
+              Return to Dashboard
+            </Link>
+          </div>
         </div>
-      )}
+      ) : (
+        <>
 
       {/* Primary Overview Cards (Spacious, Uncongested) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -575,6 +612,8 @@ export default function ScanDetailPage() {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

@@ -68,6 +68,25 @@ public class ScanOrchestratorService {
 
             // 2. Discover Canonical Destination by Following Redirects (e.g. google.com -> https://www.google.com/)
             SafeHttpClientFactory.TargetResolution resolution = clientFactory.resolveTarget(targetUri);
+            if (!resolution.isReachable()) {
+                if (resolution.crossDomainRedirect()) {
+                    throw new com.security.scanner.exception.TargetNotFoundException(
+                            targetUri.getHost(),
+                            "Target website does not host an active site: '" + targetUri.getHost() + "' redirects off-site to external domain '" + resolution.externalRedirectHost() + "'."
+                    );
+                } else if (resolution.statusCode() == 0) {
+                    throw new com.security.scanner.exception.TargetNotFoundException(
+                            targetUri.getHost(),
+                            "Target website does not exist or is offline: Unable to connect to '" + targetUri.getHost() + "'."
+                    );
+                } else {
+                    throw new com.security.scanner.exception.TargetNotFoundException(
+                            targetUri.getHost(),
+                            "Target website does not exist or has no active web application: '" + targetUri.getHost() + "' returned HTTP status " + resolution.statusCode() + "."
+                    );
+                }
+            }
+
             URI effectiveUri = resolution.finalUri() != null ? resolution.finalUri() : targetUri;
 
             if (resolution.redirected()) {
@@ -146,9 +165,15 @@ public class ScanOrchestratorService {
         } catch (Exception e) {
             log.error("Scan #{} failed: {}", scan.getId(), e.getMessage(), e);
             scan.setStatus(ScanStatus.FAILED);
+            scan.setSecurityScore(0);
+            scan.setLetterGrade("F");
+            scan.setHeadersAnalyzed(0);
+            scan.setEndpointsTested(0);
+            scan.setSslValid(false);
+            scan.setTlsVersion("None");
             String errorMsg = e.getMessage() != null ? e.getMessage() : "Unknown execution error";
             if (e instanceof com.security.scanner.exception.TargetNotFoundException tnf) {
-                errorMsg = "Target website does not exist: Unable to resolve domain '" + tnf.getHost() + "'.";
+                errorMsg = tnf.getMessage() != null ? tnf.getMessage() : "Target website does not exist: Unable to resolve domain '" + tnf.getHost() + "'.";
             } else if (errorMsg.contains("UnknownHostException") || errorMsg.contains("Unable to resolve DNS")) {
                 errorMsg = "Target website does not exist or is offline (DNS lookup failed).";
             } else if (errorMsg.contains("Connection refused") || errorMsg.contains("ConnectException")) {
