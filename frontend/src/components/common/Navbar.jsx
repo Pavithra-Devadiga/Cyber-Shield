@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Sparkles, ArrowRight } from 'lucide-react';
+import { Plus, ArrowRight } from 'lucide-react';
 
 export default function Navbar({ title = 'Dashboard' }) {
   return (
@@ -11,14 +11,6 @@ export default function Navbar({ title = 'Dashboard' }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <Link
-          to="/"
-          className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-blue-300 hover:text-white hover:bg-blue-950/40 border border-blue-900/40 transition-colors"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-          <span>Home Banner</span>
-        </Link>
-
         <Link
           to="/scans/new"
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-600/30 hover:shadow-blue-600/40 transition-all active:scale-95"

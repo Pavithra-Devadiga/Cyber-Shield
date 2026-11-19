@@ -8,7 +8,6 @@ import {
   FileText,
   Bell,
   Shield,
-  Sparkles,
   ExternalLink,
 } from 'lucide-react';
 
@@ -72,32 +71,29 @@ export default function Sidebar({ unreadCount = 0 }) {
           );
         })}
 
-        {/* Link to Project Landing Page */}
+        {/* Link back to Project Landing */}
         <div className="pt-4 mt-4 border-t border-blue-950/60">
           <Link
             to="/"
             className="flex items-center justify-between px-4 py-2.5 rounded-xl text-xs font-semibold text-blue-300/80 hover:text-white hover:bg-blue-950/30 transition-all border border-transparent hover:border-blue-900/40"
           >
             <span className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-              Project Landing
+              <Shield className="w-3.5 h-3.5 text-sky-400" />
+              Landing Page
             </span>
             <ExternalLink className="w-3.5 h-3.5 opacity-60" />
           </Link>
         </div>
       </nav>
 
-      {/* Academic Attribution Footer (Clean & Aesthetic, No Database / No Profile) */}
+      {/* Academic Attribution Footer (Clean & Aesthetic) */}
       <div className="p-5 border-t border-blue-950/60 bg-[#090f21]">
         <div className="space-y-1">
           <span className="block text-[11px] text-blue-300/60 uppercase tracking-wider font-semibold">
-            Academic Project
+            Security Auditor
           </span>
           <div className="text-xs font-bold text-slate-200">
             Pavithra <span className="text-sky-400 font-mono text-[11px] font-normal">(U25UV24T064028)</span>
-          </div>
-          <div className="text-[11px] text-blue-300/50">
-            Summer Internship II
           </div>
         </div>
       </div>
