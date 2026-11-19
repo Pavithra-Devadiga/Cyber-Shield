@@ -14,10 +14,6 @@ import {
   Sliders,
   ChevronDown,
   RotateCcw,
-  Check,
-  ShieldCheck,
-  Sparkles,
-  Info,
 } from 'lucide-react';
 
 export default function NewScanPage() {
@@ -238,45 +234,6 @@ export default function NewScanPage() {
                 {chip}
               </button>
             ))}
-          </div>
-
-          {/* Friendly Non-Technical Assurance Feature Badges */}
-          <div className="p-5 rounded-2xl bg-[#091126]/70 border border-blue-900/40 space-y-3.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-sky-400" />
-                Automatic Multi-Vector Assessment
-              </span>
-              <span className="text-[11px] font-semibold text-blue-300/70">
-                5 Engines Enabled
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-              {[
-                { name: 'SSL / TLS Encryption', icon: Lock },
-                { name: 'Security Headers', icon: Globe },
-                { name: 'SQL Injection Check', icon: Database },
-                { name: 'XSS Script Defense', icon: Code2 },
-                { name: 'Exposed File Audit', icon: FileSearch },
-              ].map((item, idx) => {
-                const ItemIcon = item.icon;
-                return (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-xl bg-blue-950/40 border border-blue-900/30 flex items-center gap-2 text-xs font-semibold text-blue-200"
-                  >
-                    <ItemIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                    <span className="truncate">{item.name}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <p className="text-[11px] text-blue-300/60 flex items-center gap-1.5 pt-1">
-              <Sparkles className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-              Non-destructive testing only. SSRF gateway prevents internal network access.
-            </p>
           </div>
         </div>
 
