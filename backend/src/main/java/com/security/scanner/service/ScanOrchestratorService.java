@@ -148,6 +148,8 @@ public class ScanOrchestratorService {
         }
     }
 
+    private static final Set<String> ALLOWED_MODULES = Set.of("SSL", "HEADERS", "SQLI", "XSS", "EXPOSURE");
+
     private List<ScannerModule> selectModules(ScanType scanType, List<String> requestedModules) {
         if (scanType == ScanType.HEADERS_ONLY) {
             return scannerModules.stream().filter(m -> m.getModuleId().equals("HEADERS")).toList();
@@ -157,14 +159,18 @@ public class ScanOrchestratorService {
         }
         if (scanType == ScanType.QUICK) {
             return scannerModules.stream().filter(m ->
-                    m.getModuleId().equals("HEADERS") || m.getModuleId().equals("SSL") || m.getModuleId().equals("TECH")
+                    m.getModuleId().equals("HEADERS") || m.getModuleId().equals("SSL")
             ).toList();
         }
         if (scanType == ScanType.CUSTOM && requestedModules != null && !requestedModules.isEmpty()) {
             Set<String> requested = new HashSet<>(requestedModules);
-            return scannerModules.stream().filter(m -> requested.contains(m.getModuleId())).toList();
+            return scannerModules.stream()
+                    .filter(m -> ALLOWED_MODULES.contains(m.getModuleId()) && requested.contains(m.getModuleId()))
+                    .toList();
         }
-        // FULL Scan: include all scanners
-        return scannerModules;
+        // FULL Scan: run the 5 core active security audit engines
+        return scannerModules.stream()
+                .filter(m -> ALLOWED_MODULES.contains(m.getModuleId()))
+                .toList();
     }
 }

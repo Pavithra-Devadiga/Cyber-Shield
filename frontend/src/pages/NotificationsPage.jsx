@@ -61,11 +61,11 @@ export default function NotificationsPage() {
       case 'SUCCESS':
         return <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />;
       case 'WARNING':
-        return <AlertTriangle className="w-5 h-5 text-yellow-400 shrink-0" />;
+        return <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />;
       case 'ERROR':
-        return <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />;
+        return <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />;
       default:
-        return <Info className="w-5 h-5 text-blue-400 shrink-0" />;
+        return <Info className="w-5 h-5 text-stone-400 shrink-0" />;
     }
   };
 
@@ -73,73 +73,67 @@ export default function NotificationsPage() {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Security Alerts & Notifications</h2>
-          <p className="text-slate-400 text-sm mt-1">
+          <h2 className="text-2xl font-bold text-stone-100 tracking-tight">Security Alerts & Notifications</h2>
+          <p className="text-stone-400 text-sm mt-1">
             Real-time audit updates, scan status alerts, and vulnerability escalation warnings.
           </p>
         </div>
 
         <button
           onClick={handleMarkAllAsRead}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-stone-900 border border-stone-800 text-stone-300 hover:text-stone-100 text-xs font-semibold transition-colors shadow-sm"
         >
-          <CheckCheck className="w-4 h-4 text-emerald-400" />
+          <CheckCheck className="w-4 h-4 text-amber-400" />
           Mark All as Read
         </button>
       </div>
 
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-xl">
-        <div className="divide-y divide-slate-800/80">
+      <div className="rounded-2xl bg-stone-900/90 border border-stone-800 overflow-hidden shadow-xl">
+        <div className="divide-y divide-stone-800/80">
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400" />
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="text-center py-12 text-slate-500 text-sm">
+            <div className="text-center py-12 text-stone-400 text-sm">
               No notifications at this time.
             </div>
           ) : (
             notifications.map((n) => (
               <div
                 key={n.id}
-                className={`p-5 flex items-start justify-between gap-4 transition-colors ${
-                  n.isRead ? 'bg-transparent' : 'bg-emerald-500/[0.03]'
+                className={`p-5 flex items-start gap-4 transition-colors ${
+                  n.isRead ? 'opacity-70 bg-stone-950/20' : 'bg-stone-900/50 hover:bg-stone-900'
                 }`}
               >
-                <div className="flex items-start gap-3.5 flex-1">
-                  <div className="mt-0.5">{getTypeIcon(n.type)}</div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-white">{n.title}</span>
-                      {!n.isRead && (
-                        <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{n.message}</p>
-                    <span className="text-[11px] text-slate-500 font-mono block pt-1">
-                      {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                {getTypeIcon(n.type)}
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-sm text-stone-100">{n.title}</span>
+                    <span className="text-[11px] text-stone-400 font-mono">
+                      {n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                     </span>
                   </div>
+                  <p className="text-xs text-stone-400 leading-relaxed">{n.message}</p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {n.scanId && (
-                    <Link
-                      to={`/scans/${n.scanId}`}
-                      className="text-xs text-emerald-400 hover:underline inline-flex items-center gap-1"
-                    >
-                      Audit Report
-                      <ExternalLink className="w-3 h-3" />
-                    </Link>
-                  )}
+                <div className="flex items-center gap-2">
                   {!n.isRead && (
                     <button
                       onClick={() => handleMarkAsRead(n.id)}
-                      className="text-xs text-slate-400 hover:text-white"
-                      title="Mark as read"
+                      className="px-2.5 py-1 text-xs rounded-lg border border-stone-800 hover:bg-stone-800 text-stone-300 transition-colors"
                     >
-                      <CheckCircle2 className="w-4 h-4" />
+                      Mark read
                     </button>
+                  )}
+                  {n.scanId && (
+                    <Link
+                      to={`/scans/${n.scanId}`}
+                      className="p-1.5 text-stone-400 hover:text-amber-400"
+                      title="View Scan"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </Link>
                   )}
                 </div>
               </div>
@@ -147,26 +141,29 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {/* Pagination Bar */}
-        <div className="p-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-          <span>Page {page + 1} of {totalPages}</span>
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page === 0}
-              onClick={() => setPage(page - 1)}
-              className="p-1.5 rounded-lg border border-slate-800 bg-slate-950 disabled:opacity-40 hover:bg-slate-800 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(page + 1)}
-              className="p-1.5 rounded-lg border border-slate-800 bg-slate-950 disabled:opacity-40 hover:bg-slate-800 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400">
+            <span>
+              Page {page + 1} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page === 0}
+                onClick={() => setPage(page - 1)}
+                className="p-1.5 rounded-lg border border-stone-800 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage(page + 1)}
+                className="p-1.5 rounded-lg border border-stone-800 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import {
   Ban,
   ChevronLeft,
   ChevronRight,
+  Database,
 } from 'lucide-react';
 
 export default function ScansPage() {
@@ -38,7 +39,6 @@ export default function ScansPage() {
     fetchScans();
   }, [page]);
 
-  // Auto-poll if any scan is RUNNING or QUEUED
   useEffect(() => {
     const hasActive = scans.some((s) => s.status === 'RUNNING' || s.status === 'QUEUED');
     if (!hasActive) return;
@@ -62,22 +62,22 @@ export default function ScansPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Vulnerability Scan History</h2>
-          <p className="text-slate-400 text-sm mt-1">
+          <h2 className="text-2xl font-bold text-stone-100 tracking-tight">Vulnerability Scan History</h2>
+          <p className="text-stone-400 text-sm mt-1">
             Real-time tracking of security audits, automated findings, and posture grades.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={fetchScans}
-            className="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-400 hover:text-white transition-colors"
+            className="p-2.5 rounded-xl border border-stone-800 bg-stone-900 text-stone-400 hover:text-stone-100 transition-colors"
             title="Refresh List"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <Link
             to="/scans/new"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all shadow-md shadow-emerald-500/20"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-sm transition-all shadow-md shadow-amber-500/20 active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
             New Audit
@@ -86,10 +86,10 @@ export default function ScansPage() {
       </div>
 
       {/* Scans Table */}
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-xl">
+      <div className="rounded-2xl bg-stone-900/90 border border-stone-800 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-950/70 text-slate-400 text-xs uppercase tracking-wider font-semibold border-b border-slate-800">
+            <thead className="bg-stone-950/70 text-stone-400 text-xs uppercase tracking-wider font-semibold border-b border-stone-800">
               <tr>
                 <th className="py-4 px-6">ID</th>
                 <th className="py-4 px-6">Target Domain</th>
@@ -100,97 +100,92 @@ export default function ScansPage() {
                 <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-slate-200">
+            <tbody className="divide-y divide-stone-800/80 text-stone-200">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400" />
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400" />
                   </td>
                 </tr>
               ) : scans.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-500 text-sm">
-                    No scans found. Start your first security audit above.
+                  <td colSpan={7} className="text-center py-12 text-stone-400 text-sm space-y-2">
+                    <Database className="w-6 h-6 text-stone-500 mx-auto mb-2 opacity-50" />
+                    <p className="font-semibold text-stone-300">No scans found in database</p>
+                    <p className="text-xs text-stone-400">Launch your first live audit using the button above.</p>
                   </td>
                 </tr>
               ) : (
                 scans.map((scan) => (
-                  <tr key={scan.id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="py-4 px-6 font-mono text-xs text-slate-500">#{scan.id}</td>
-                    <td className="py-4 px-6 font-medium text-white max-w-xs truncate">
+                  <tr key={scan.id} className="hover:bg-stone-800/40 transition-colors">
+                    <td className="py-4 px-6 font-mono text-xs text-stone-400 font-semibold">
+                      #{scan.id}
+                    </td>
+                    <td className="py-4 px-6 font-medium text-stone-100 max-w-xs truncate">
                       <div className="flex items-center gap-2">
                         <span className="truncate">{scan.targetUrl}</span>
                         <a
                           href={scan.targetUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-slate-500 hover:text-slate-300"
+                          className="text-stone-400 hover:text-amber-400 transition-colors"
                         >
-                          <ExternalLink className="w-3 h-3 shrink-0" />
+                          <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                         </a>
                       </div>
-                      <span className="text-[11px] text-slate-500 font-mono block mt-0.5">
-                        {scan.createdAt ? new Date(scan.createdAt).toLocaleString() : ''}
-                      </span>
                     </td>
-                    <td className="py-4 px-6">
-                      <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                        {scan.scanType}
-                      </span>
+                    <td className="py-4 px-6 text-xs text-stone-400 font-mono">
+                      {scan.scanType}
                     </td>
                     <td className="py-4 px-6">
                       <StatusBadge status={scan.status} />
                     </td>
                     <td className="py-4 px-6">
-                      {scan.status === 'COMPLETED' ? (
-                        <ScoreGauge score={scan.securityScore} grade={scan.letterGrade} size="sm" />
-                      ) : (
-                        <span className="text-xs text-slate-500 italic">Pending analysis...</span>
-                      )}
+                      <ScoreGauge score={scan.securityScore} grade={scan.letterGrade} size="sm" />
                     </td>
                     <td className="py-4 px-6">
-                      <div className="flex items-center gap-1.5 text-xs font-bold">
-                        {scan.criticalCount > 0 && (
-                          <span className="px-2 py-0.5 rounded bg-red-500/15 text-red-400 border border-red-500/30">
-                            {scan.criticalCount} C
-                          </span>
-                        )}
-                        {scan.highCount > 0 && (
-                          <span className="px-2 py-0.5 rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">
-                            {scan.highCount} H
-                          </span>
-                        )}
-                        {scan.mediumCount > 0 && (
-                          <span className="px-2 py-0.5 rounded bg-yellow-500/15 text-yellow-400 border border-yellow-500/30">
-                            {scan.mediumCount} M
-                          </span>
-                        )}
-                        {scan.lowCount > 0 && (
-                          <span className="px-2 py-0.5 rounded bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                            {scan.lowCount} L
-                          </span>
-                        )}
-                        {scan.vulnerabilityCount === 0 && scan.status === 'COMPLETED' && (
-                          <span className="text-xs text-emerald-400 font-medium">Clean</span>
-                        )}
-                      </div>
+                      {scan.vulnerabilities && scan.vulnerabilities.length > 0 ? (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'INFO'].map((sev) => {
+                            const count = scan.vulnerabilities.filter((v) => v.severity === sev).length;
+                            if (count === 0) return null;
+                            const colors = {
+                              CRITICAL: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+                              HIGH: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                              MEDIUM: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+                              LOW: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                              INFO: 'bg-stone-800 text-stone-300 border-stone-700',
+                            };
+                            return (
+                              <span
+                                key={sev}
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${colors[sev]}`}
+                              >
+                                {count} {sev.slice(0, 4)}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-stone-400">0 findings</span>
+                      )}
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {(scan.status === 'RUNNING' || scan.status === 'QUEUED') && (
                           <button
                             onClick={(e) => handleCancel(scan.id, e)}
-                            className="px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 border border-rose-500/30 flex items-center gap-1"
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            title="Cancel Scan"
                           >
-                            <Ban className="w-3 h-3" />
-                            Cancel
+                            <Ban className="w-4 h-4" />
                           </button>
                         )}
                         <Link
                           to={`/scans/${scan.id}`}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 inline-flex items-center gap-1.5 transition-colors"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:underline"
                         >
-                          Report
+                          Inspect
                           <ArrowRight className="w-3 h-3" />
                         </Link>
                       </div>
@@ -202,28 +197,30 @@ export default function ScansPage() {
           </table>
         </div>
 
-        {/* Pagination Bar */}
-        <div className="p-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-          <span>
-            Page {page + 1} of {totalPages}
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page === 0}
-              onClick={() => setPage(page - 1)}
-              className="p-1.5 rounded-lg border border-slate-800 bg-slate-950 disabled:opacity-40 hover:bg-slate-800 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage(page + 1)}
-              className="p-1.5 rounded-lg border border-slate-800 bg-slate-950 disabled:opacity-40 hover:bg-slate-800 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400">
+            <span>
+              Page {page + 1} of {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={page === 0}
+                onClick={() => setPage(page - 1)}
+                className="p-1.5 rounded-lg border border-stone-800 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                disabled={page >= totalPages - 1}
+                onClick={() => setPage(page + 1)}
+                className="p-1.5 rounded-lg border border-stone-800 hover:bg-stone-800 disabled:opacity-40 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

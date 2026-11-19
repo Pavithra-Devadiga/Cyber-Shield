@@ -22,7 +22,7 @@ export default function SeverityBadge({ severity, showIcon = true, size = 'sm' }
       icon: Info,
     },
     INFO: {
-      bg: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+      bg: 'bg-stone-800 text-stone-300 border-stone-700',
       icon: Info,
     },
   };

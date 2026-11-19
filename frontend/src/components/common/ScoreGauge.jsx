@@ -10,7 +10,7 @@ export default function ScoreGauge({ score, grade, size = 'md' }) {
       case 'A':
         return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10 stroke-emerald-500';
       case 'B':
-        return 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10 stroke-cyan-500';
+        return 'text-amber-400 border-amber-500/30 bg-amber-500/10 stroke-amber-500';
       case 'C':
         return 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10 stroke-yellow-500';
       case 'D':
@@ -35,7 +35,7 @@ export default function ScoreGauge({ score, grade, size = 'md' }) {
             cx="50"
             cy="50"
             r={radius}
-            className="stroke-slate-800"
+            className="stroke-stone-800"
             strokeWidth={isSmall ? '8' : '7'}
             fill="transparent"
           />
@@ -54,21 +54,21 @@ export default function ScoreGauge({ score, grade, size = 'md' }) {
         </svg>
 
         <div className="absolute flex flex-col items-center justify-center">
-          <span className={`font-bold tracking-tight text-white ${isSmall ? 'text-sm' : 'text-xl'}`}>
+          <span className={`font-bold tracking-tight text-stone-100 ${isSmall ? 'text-sm' : 'text-xl'}`}>
             {score !== null && score !== undefined ? score : '--'}
           </span>
-          {!isSmall && <span className="text-[10px] text-slate-400 uppercase font-medium">/ 100</span>}
+          {!isSmall && <span className="text-[10px] text-stone-400 uppercase font-medium">/ 100</span>}
         </div>
       </div>
 
       {grade && (
         <div className="flex flex-col">
-          <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Security Grade</span>
+          <span className="text-xs text-stone-400 uppercase tracking-wider font-semibold">Security Grade</span>
           <div className="flex items-baseline gap-1.5 mt-0.5">
             <span className={`text-2xl font-extrabold px-2.5 py-0.5 rounded-md border ${getGradeColor(grade)}`}>
               {grade}
             </span>
-            <span className="text-xs text-slate-400 font-medium">
+            <span className="text-xs text-stone-400 font-medium">
               {numericScore >= 85 ? 'Strong Posture' : numericScore >= 60 ? 'Needs Attention' : 'High Risk'}
             </span>
           </div>

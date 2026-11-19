@@ -6,14 +6,14 @@ export default function StatusBadge({ status }) {
 
   const config = {
     QUEUED: {
-      bg: 'bg-slate-800 text-slate-300 border-slate-700',
+      bg: 'bg-stone-800 text-stone-300 border-stone-700',
       icon: Clock,
       label: 'Queued',
     },
     RUNNING: {
-      bg: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
+      bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
       icon: Loader2,
-      label: 'Scanning...',
+      label: 'Auditing...',
       spin: true,
     },
     COMPLETED: {

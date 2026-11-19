@@ -22,7 +22,6 @@ import {
   RefreshCw,
   ChevronsUpDown,
   Layers,
-  Clock,
   Sparkles,
 } from 'lucide-react';
 
@@ -54,10 +53,8 @@ export default function ScanDetailPage() {
     fetchScanDetails();
   }, [id]);
 
-  // Poll if scan is running
   useEffect(() => {
     if (!scan || (scan.status !== 'RUNNING' && scan.status !== 'QUEUED')) return;
-
     const interval = setInterval(fetchScanDetails, 3000);
     return () => clearInterval(interval);
   }, [scan?.status]);
@@ -120,21 +117,21 @@ export default function ScanDetailPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-80 space-y-3">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-400" />
-        <span className="text-slate-400 text-sm">Querying database audit records...</span>
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-400" />
+        <span className="text-stone-400 text-sm">Querying database audit records...</span>
       </div>
     );
   }
 
   if (!scan) {
     return (
-      <div className="text-center py-20 bg-slate-900/60 rounded-2xl border border-slate-800 max-w-2xl mx-auto">
-        <ShieldAlert className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-white">Scan Record Not Found</h3>
-        <p className="text-slate-400 text-sm mt-1">Unable to locate scan with ID #{id} in the database.</p>
+      <div className="text-center py-20 bg-stone-900/60 rounded-2xl border border-stone-800 max-w-2xl mx-auto">
+        <ShieldAlert className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+        <h3 className="text-lg font-bold text-stone-100">Scan Record Not Found</h3>
+        <p className="text-stone-400 text-sm mt-1">Unable to locate scan with ID #{id} in the database.</p>
         <Link
           to="/scans"
-          className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 text-sm font-semibold transition-colors"
+          className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-amber-400 text-sm font-semibold transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Return to Scan History
@@ -145,7 +142,6 @@ export default function ScanDetailPage() {
 
   const vulnerabilities = scan.vulnerabilities || [];
 
-  // Severity counts
   const counts = {
     ALL: vulnerabilities.length,
     CRITICAL: vulnerabilities.filter((v) => v.severity === 'CRITICAL').length,
@@ -172,15 +168,15 @@ export default function ScanDetailPage() {
   const getSeverityBorder = (sev) => {
     switch (sev) {
       case 'CRITICAL':
-        return 'border-l-4 border-l-red-500 hover:border-slate-700';
+        return 'border-l-4 border-l-red-500 hover:border-stone-700';
       case 'HIGH':
-        return 'border-l-4 border-l-orange-500 hover:border-slate-700';
+        return 'border-l-4 border-l-orange-500 hover:border-stone-700';
       case 'MEDIUM':
-        return 'border-l-4 border-l-amber-500 hover:border-slate-700';
+        return 'border-l-4 border-l-amber-500 hover:border-stone-700';
       case 'LOW':
-        return 'border-l-4 border-l-blue-500 hover:border-slate-700';
+        return 'border-l-4 border-l-blue-500 hover:border-stone-700';
       default:
-        return 'border-l-4 border-l-slate-500 hover:border-slate-700';
+        return 'border-l-4 border-l-stone-500 hover:border-stone-700';
     }
   };
 
@@ -191,28 +187,28 @@ export default function ScanDetailPage() {
         <div className="flex items-center gap-3">
           <Link
             to="/scans"
-            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700 transition-all shadow-sm"
+            className="p-2.5 rounded-xl bg-stone-900 border border-stone-800 text-stone-400 hover:text-stone-100 hover:border-stone-700 transition-all shadow-sm"
             title="Back to Scans"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              <span className="text-xs font-mono font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                 AUDIT #{scan.id}
               </span>
               <StatusBadge status={scan.status} />
-              <span className="text-xs text-slate-500 font-mono hidden md:inline">
+              <span className="text-xs text-stone-400 font-mono hidden md:inline">
                 {scan.scanType} PROFILE
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2 mt-1">
+            <h2 className="text-xl sm:text-2xl font-bold text-stone-100 tracking-tight flex items-center gap-2 mt-1">
               <span className="break-all">{scan.targetUrl}</span>
               <a
                 href={scan.targetUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="text-slate-500 hover:text-emerald-400 transition-colors shrink-0"
+                className="text-stone-400 hover:text-amber-400 transition-colors shrink-0"
                 title="Open Target in New Tab"
               >
                 <ExternalLink className="w-4 h-4" />
@@ -225,16 +221,16 @@ export default function ScanDetailPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={handleRerunAudit}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 text-xs font-semibold transition-all shadow-sm"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
+            <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
             Re-run Audit
           </button>
 
           <button
             onClick={handleDownloadPdf}
             disabled={downloading || scan.status !== 'COMPLETED'}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all shadow-md shadow-emerald-500/20 disabled:opacity-50 disabled:pointer-events-none"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold transition-all shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:pointer-events-none active:scale-95"
           >
             <FileDown className="w-4 h-4" />
             {downloading ? 'Compiling PDF...' : 'Download PDF Report'}
@@ -245,13 +241,13 @@ export default function ScanDetailPage() {
       {/* Primary Overview Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Score & Posture Box */}
-        <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between shadow-xl">
+        <div className="p-6 rounded-2xl bg-stone-900/90 border border-stone-800 flex flex-col justify-between shadow-xl">
           <div>
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-400">
                 Security Posture Score
               </span>
-              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
                 100 pt Scale
               </span>
             </div>
@@ -260,58 +256,58 @@ export default function ScanDetailPage() {
             </div>
           </div>
 
-          <div className="text-xs text-slate-400 border-t border-slate-800/80 pt-3.5 mt-2 space-y-1.5">
+          <div className="text-xs text-stone-400 border-t border-stone-800/80 pt-3.5 mt-2 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Scan Profile:</span>
-              <span className="font-semibold text-slate-200">{scan.scanType}</span>
+              <span className="text-stone-400">Scan Profile:</span>
+              <span className="font-semibold text-stone-200">{scan.scanType}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Audit Duration:</span>
-              <span className="font-semibold text-slate-200">
+              <span className="text-stone-400">Audit Duration:</span>
+              <span className="font-semibold text-stone-200">
                 {scan.startTime && scan.endTime
                   ? `${Math.max(1, Math.round((new Date(scan.endTime) - new Date(scan.startTime)) / 1000))}s`
                   : 'In progress'}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400">Total Findings:</span>
-              <span className="font-semibold text-emerald-400 font-mono">
+              <span className="text-stone-400">Total Findings:</span>
+              <span className="font-semibold text-amber-400 font-mono">
                 {vulnerabilities.length} issues detected
               </span>
             </div>
           </div>
         </div>
 
-        {/* Engine Diagnostics & Exposure Checks */}
-        <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4 lg:col-span-2 shadow-xl flex flex-col justify-between">
+        {/* Engine Diagnostics */}
+        <div className="p-6 rounded-2xl bg-stone-900/90 border border-stone-800 space-y-4 lg:col-span-2 shadow-xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-400">
                 Automated Audit Diagnostics
               </span>
-              <span className="text-xs text-slate-500 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Live Target Telemetry
+              <span className="text-xs text-stone-400 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> 5 Core Engines Telemetry
               </span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-2">
-              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                <span className="text-[11px] text-slate-400 font-medium">Headers Inspected</span>
-                <span className="text-xl font-bold text-white block mt-1">{scan.headersAnalyzed || 0}</span>
+              <div className="p-3.5 rounded-xl bg-stone-950/80 border border-stone-800">
+                <span className="text-[11px] text-stone-400 font-medium">Headers Inspected</span>
+                <span className="text-xl font-bold text-stone-100 block mt-1">{scan.headersAnalyzed || 0}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                <span className="text-[11px] text-slate-400 font-medium">Endpoints Tested</span>
-                <span className="text-xl font-bold text-white block mt-1">{scan.endpointsTested || 0}</span>
+              <div className="p-3.5 rounded-xl bg-stone-950/80 border border-stone-800">
+                <span className="text-[11px] text-stone-400 font-medium">Endpoints Tested</span>
+                <span className="text-xl font-bold text-stone-100 block mt-1">{scan.endpointsTested || 0}</span>
               </div>
-              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                <span className="text-[11px] text-slate-400 font-medium">SSL / TLS Protocol</span>
-                <span className="text-sm font-bold text-emerald-400 block mt-1 truncate">
+              <div className="p-3.5 rounded-xl bg-stone-950/80 border border-stone-800">
+                <span className="text-[11px] text-stone-400 font-medium">SSL / TLS Protocol</span>
+                <span className="text-sm font-bold text-amber-400 block mt-1 truncate">
                   {scan.tlsVersion || (scan.sslValid ? 'Active TLS' : 'N/A')}
                 </span>
               </div>
-              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                <span className="text-[11px] text-slate-400 font-medium">SSL Valid</span>
-                <span className="text-sm font-bold text-white block mt-1">
+              <div className="p-3.5 rounded-xl bg-stone-950/80 border border-stone-800">
+                <span className="text-[11px] text-stone-400 font-medium">SSL Valid</span>
+                <span className="text-sm font-bold text-stone-100 block mt-1">
                   {scan.sslValid === true ? (
                     <span className="text-emerald-400 flex items-center gap-1 font-semibold">
                       <CheckCircle2 className="w-3.5 h-3.5" /> Valid
@@ -328,49 +324,29 @@ export default function ScanDetailPage() {
             </div>
           </div>
 
-          {/* Identified Technologies */}
-          <div className="pt-3 border-t border-slate-800">
-            <span className="text-xs text-slate-400 font-semibold block mb-2">
-              Fingerprinted Technologies & Web Servers:
-            </span>
-            {scan.technologiesFound ? (
-              <div className="flex flex-wrap gap-2">
-                {scan.technologiesFound.split(', ').map((tech, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2.5 py-1 rounded-lg bg-slate-950 text-slate-300 text-xs font-mono border border-slate-800 flex items-center gap-1.5"
-                  >
-                    <Server className="w-3 h-3 text-emerald-400" />
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <span className="text-xs text-slate-500 italic">No technology signatures or banner headers detected.</span>
-            )}
+          <div className="pt-3 border-t border-stone-800 text-xs text-stone-400">
+            Audit coverage includes: SSL/TLS Cryptographic validation, HTTP Security Headers, Benign SQLi Probes, XSS Reflection, and Endpoint Exposure.
           </div>
         </div>
       </div>
 
       {/* Vulnerabilities Table & Filter */}
-      <div className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-xl">
-        {/* Header & Search */}
-        <div className="p-6 border-b border-slate-800 space-y-4">
+      <div className="rounded-2xl bg-stone-900/90 border border-stone-800 overflow-hidden shadow-xl">
+        <div className="p-6 border-b border-stone-800 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="font-bold text-white text-base">Detected Vulnerabilities & Audit Findings</h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <h3 className="font-bold text-stone-100 text-base">Detected Vulnerabilities & Audit Findings</h3>
+              <p className="text-xs text-stone-400 mt-0.5">
                 Showing {filteredVulns.length} of {vulnerabilities.length} findings
               </p>
             </div>
 
-            {/* Quick Actions */}
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleExpandAll}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-950 border border-stone-800 text-xs font-semibold text-stone-300 hover:text-stone-100 hover:border-stone-700 transition-colors"
               >
-                <ChevronsUpDown className="w-3.5 h-3.5 text-emerald-400" />
+                <ChevronsUpDown className="w-3.5 h-3.5 text-amber-400" />
                 {allFilteredExpanded ? 'Collapse All' : 'Expand All'}
               </button>
             </div>
@@ -382,8 +358,8 @@ export default function ScanDetailPage() {
               onClick={() => setSeverityFilter('ALL')}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 severityFilter === 'ALL'
-                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                  : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
+                  ? 'bg-amber-500 text-stone-950 shadow-sm'
+                  : 'bg-stone-950 border border-stone-800 text-stone-400 hover:text-stone-100'
               }`}
             >
               ALL <span className="opacity-80">({counts.ALL})</span>
@@ -393,7 +369,7 @@ export default function ScanDetailPage() {
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 severityFilter === 'CRITICAL'
                   ? 'bg-rose-600 text-white shadow-sm'
-                  : 'bg-slate-950 border border-slate-800 text-rose-400 hover:bg-rose-950/30'
+                  : 'bg-stone-950 border border-stone-800 text-rose-400 hover:bg-rose-950/30'
               }`}
             >
               CRITICAL <span className="opacity-80">({counts.CRITICAL})</span>
@@ -403,7 +379,7 @@ export default function ScanDetailPage() {
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 severityFilter === 'HIGH'
                   ? 'bg-orange-600 text-white shadow-sm'
-                  : 'bg-slate-950 border border-slate-800 text-orange-400 hover:bg-orange-950/30'
+                  : 'bg-stone-950 border border-stone-800 text-orange-400 hover:bg-orange-950/30'
               }`}
             >
               HIGH <span className="opacity-80">({counts.HIGH})</span>
@@ -412,8 +388,8 @@ export default function ScanDetailPage() {
               onClick={() => setSeverityFilter('MEDIUM')}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 severityFilter === 'MEDIUM'
-                  ? 'bg-amber-500 text-slate-950 shadow-sm'
-                  : 'bg-slate-950 border border-slate-800 text-amber-400 hover:bg-amber-950/30'
+                  ? 'bg-amber-500 text-stone-950 shadow-sm'
+                  : 'bg-stone-950 border border-stone-800 text-amber-400 hover:bg-amber-950/30'
               }`}
             >
               MEDIUM <span className="opacity-80">({counts.MEDIUM})</span>
@@ -423,7 +399,7 @@ export default function ScanDetailPage() {
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 severityFilter === 'LOW'
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-950 border border-slate-800 text-blue-400 hover:bg-blue-950/30'
+                  : 'bg-stone-950 border border-stone-800 text-blue-400 hover:bg-blue-950/30'
               }`}
             >
               LOW <span className="opacity-80">({counts.LOW})</span>
@@ -432,36 +408,35 @@ export default function ScanDetailPage() {
               onClick={() => setSeverityFilter('INFO')}
               className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                 severityFilter === 'INFO'
-                  ? 'bg-slate-700 text-white shadow-sm'
-                  : 'bg-slate-950 border border-slate-800 text-slate-400 hover:bg-slate-800'
+                  ? 'bg-stone-700 text-white shadow-sm'
+                  : 'bg-stone-950 border border-stone-800 text-stone-400 hover:bg-stone-800'
               }`}
             >
               INFO <span className="opacity-80">({counts.INFO})</span>
             </button>
 
-            {/* Search Input */}
             <div className="relative ml-auto w-full sm:w-64 mt-2 sm:mt-0">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-stone-400" />
               <input
                 type="text"
-                placeholder="Search findings, CWE, or category..."
+                placeholder="Search findings or CWE..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-stone-950 border border-stone-700 text-xs text-stone-100 placeholder-stone-400 focus:outline-none focus:border-amber-500 transition-colors"
               />
             </div>
           </div>
         </div>
 
         {/* Findings List */}
-        <div className="divide-y divide-slate-800/80">
+        <div className="divide-y divide-stone-800/80">
           {filteredVulns.length === 0 ? (
-            <div className="text-center py-16 text-slate-400 text-sm space-y-2">
-              <ShieldAlert className="w-8 h-8 text-slate-600 mx-auto" />
-              <p>No findings match your current search or severity filter.</p>
+            <div className="text-center py-16 text-stone-400 text-sm space-y-2">
+              <ShieldAlert className="w-8 h-8 text-stone-600 mx-auto" />
+              <p>No findings match your current filter criteria.</p>
               <button
                 onClick={() => { setSeverityFilter('ALL'); setSearchQuery(''); }}
-                className="text-xs text-emerald-400 hover:underline"
+                className="text-xs text-amber-400 hover:underline"
               >
                 Clear all filters
               </button>
@@ -481,52 +456,48 @@ export default function ScanDetailPage() {
                     <div className="space-y-1.5 flex-1">
                       <div className="flex items-center gap-2.5 flex-wrap">
                         <SeverityBadge severity={v.severity} />
-                        <span className="font-bold text-white text-sm hover:text-emerald-300 transition-colors">
+                        <span className="font-bold text-stone-100 text-sm hover:text-amber-300 transition-colors">
                           {v.title}
                         </span>
                         {v.cwe && (
-                          <span className="px-2 py-0.5 rounded bg-slate-800/80 text-slate-400 font-mono text-[11px] border border-slate-700/60">
+                          <span className="px-2 py-0.5 rounded bg-stone-800/80 text-stone-400 font-mono text-[11px] border border-stone-700/60">
                             {v.cwe}
                           </span>
                         )}
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[11px] font-medium border border-emerald-500/20">
+                        <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[11px] font-medium border border-amber-500/20">
                           {v.category}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-400 leading-relaxed">
+                      <p className="text-xs text-stone-400 leading-relaxed">
                         {v.description}
                       </p>
                     </div>
 
                     <button
-                      className="p-1 rounded-lg text-slate-500 hover:text-slate-300 transition-colors"
+                      className="p-1 rounded-lg text-stone-400 hover:text-stone-200 transition-colors"
                       title={isExpanded ? 'Collapse' : 'Expand'}
                     >
                       {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </button>
                   </div>
 
-                  {/* Expanded Detail Panel */}
                   {isExpanded && (
-                    <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-4 text-xs">
-                      {/* Observed Evidence */}
+                    <div className="mt-4 pt-4 border-t border-stone-800/80 space-y-4 text-xs">
                       {v.evidence && (
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                              Observed Evidence & Payload Response:
-                            </span>
+                            <span className="font-bold text-stone-300">Observed Evidence & Payload Response:</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleCopyText(v.evidence, `ev-${v.id}`);
                               }}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[11px] text-slate-400 hover:text-white transition-colors"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-stone-950 border border-stone-800 text-[11px] text-stone-400 hover:text-stone-200 transition-colors"
                             >
                               {copiedId === `ev-${v.id}` ? (
                                 <>
-                                  <Check className="w-3 h-3 text-emerald-400" />
-                                  <span className="text-emerald-400">Copied</span>
+                                  <Check className="w-3 h-3 text-amber-400" />
+                                  <span className="text-amber-400">Copied</span>
                                 </>
                               ) : (
                                 <>
@@ -536,28 +507,27 @@ export default function ScanDetailPage() {
                               )}
                             </button>
                           </div>
-                          <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 font-mono overflow-x-auto whitespace-pre-wrap text-[11px] leading-relaxed shadow-inner">
+                          <pre className="p-3.5 rounded-xl bg-stone-950 border border-stone-800 text-stone-300 font-mono overflow-x-auto whitespace-pre-wrap text-[11px] leading-relaxed shadow-inner">
                             {v.evidence}
                           </pre>
                         </div>
                       )}
 
-                      {/* Affected URL */}
                       {v.affectedUrl && (
                         <div>
                           <div className="flex items-center justify-between mb-1.5">
-                            <span className="font-bold text-slate-300">Affected Target Endpoint:</span>
+                            <span className="font-bold text-stone-300">Affected Endpoint:</span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleCopyText(v.affectedUrl, `url-${v.id}`);
                               }}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[11px] text-slate-400 hover:text-white transition-colors"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-stone-950 border border-stone-800 text-[11px] text-stone-400 hover:text-stone-200 transition-colors"
                             >
                               {copiedId === `url-${v.id}` ? (
                                 <>
-                                  <Check className="w-3 h-3 text-emerald-400" />
-                                  <span className="text-emerald-400">Copied</span>
+                                  <Check className="w-3 h-3 text-amber-400" />
+                                  <span className="text-amber-400">Copied</span>
                                 </>
                               ) : (
                                 <>
@@ -567,19 +537,18 @@ export default function ScanDetailPage() {
                               )}
                             </button>
                           </div>
-                          <span className="font-mono text-emerald-400 bg-slate-950 px-3 py-2 rounded-xl border border-slate-800 block break-all text-xs">
+                          <span className="font-mono text-amber-400 bg-stone-950 px-3 py-2 rounded-xl border border-stone-800 block break-all text-xs">
                             {v.affectedUrl}
                           </span>
                         </div>
                       )}
 
-                      {/* Remediation Action */}
                       {v.remediation && (
-                        <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-300">
-                          <span className="font-bold flex items-center gap-1.5 mb-1.5 text-emerald-400 text-xs">
+                        <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-200">
+                          <span className="font-bold flex items-center gap-1.5 mb-1.5 text-amber-400 text-xs">
                             <CheckCircle2 className="w-4 h-4 shrink-0" /> Recommended Remediation Action:
                           </span>
-                          <p className="leading-relaxed text-slate-300 text-xs">{v.remediation}</p>
+                          <p className="leading-relaxed text-stone-300 text-xs">{v.remediation}</p>
                         </div>
                       )}
                     </div>
