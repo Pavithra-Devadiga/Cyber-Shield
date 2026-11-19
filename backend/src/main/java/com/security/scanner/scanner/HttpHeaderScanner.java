@@ -18,12 +18,21 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 public class HttpHeaderScanner implements ScannerModule {
 
     private static final Logger log = LoggerFactory.getLogger(HttpHeaderScanner.class);
     private final SafeHttpClientFactory clientFactory;
+
+    // Major top domains registered in global browser HSTS Preload list (Chromium, Firefox, Safari)
+    private static final Set<String> HSTS_PRELOADED_ROOTS = Set.of(
+            "google.com", "google.co.in", "google.co.uk", "google.ca", "google.de", "google.fr", "google.com.au",
+            "gmail.com", "youtube.com", "apple.com", "icloud.com", "github.com", "github.io", "microsoft.com",
+            "cloudflare.com", "amazon.com", "aws.amazon.com", "facebook.com", "instagram.com", "whatsapp.com",
+            "twitter.com", "x.com", "netflix.com", "wikipedia.org", "mozilla.org", "paypal.com"
+    );
 
     public HttpHeaderScanner(SafeHttpClientFactory clientFactory) {
         this.clientFactory = clientFactory;
@@ -39,6 +48,18 @@ public class HttpHeaderScanner implements ScannerModule {
         return "HTTP Security Headers Scanner";
     }
 
+    private boolean isHstsPreloaded(String host) {
+        if (host == null) return false;
+        String h = host.toLowerCase();
+        if (h.endsWith(".app") || h.endsWith(".dev") || h.endsWith(".page")) return true;
+        for (String root : HSTS_PRELOADED_ROOTS) {
+            if (h.equals(root) || h.endsWith("." + root)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public ScannerResult scan(URI targetUri, Scan scan) {
         ScannerResult result = new ScannerResult(getModuleId());
@@ -52,38 +73,58 @@ public class HttpHeaderScanner implements ScannerModule {
                     .GET()
                     .build();
 
-            HttpResponse<Void> response = client.send(request, HttpResponse.BodyHandlers.discarding());
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             HttpHeaders headers = response.headers();
             Map<String, List<String>> headerMap = headers.map();
+            String body = response.body() != null ? response.body() : "";
+            String lowerBody = body.toLowerCase();
 
             result.addMetadata("statusCode", response.statusCode());
             result.addMetadata("headersAnalyzedCount", headerMap.size());
 
-            // 1. Check Strict-Transport-Security (HSTS)
+            String host = targetUri.getHost();
+
+            // 1. Strict-Transport-Security (HSTS)
             Optional<String> hsts = headers.firstValue("strict-transport-security");
             if (targetUri.getScheme().equalsIgnoreCase("https")) {
-                if (hsts.isEmpty()) {
+                if (hsts.isPresent()) {
+                    String hstsVal = hsts.get().toLowerCase();
+                    if (!hstsVal.contains("includesubdomains")) {
+                        result.addVulnerability(new Vulnerability(
+                                scan,
+                                "HSTS Header Active (includeSubDomains optional)",
+                                "The HSTS header is configured on the root domain. Including 'includeSubDomains' is recommended for comprehensive child subdomain protection.",
+                                Severity.INFO,
+                                VulnerabilityCategory.SECURITY_HEADERS,
+                                "CWE-319",
+                                "Include 'includeSubDomains' in the Strict-Transport-Security header value.",
+                                "Strict-Transport-Security: " + hsts.get(),
+                                targetUri.toString()
+                        ));
+                    }
+                } else if (isHstsPreloaded(host)) {
+                    result.addMetadata("hstsPreloaded", true);
+                    result.addVulnerability(new Vulnerability(
+                            scan,
+                            "HSTS Enforced via Global Browser Preload List",
+                            "The domain '" + host + "' is hardcoded in the Chromium, Firefox, and Safari browser HSTS Preload list, ensuring permanent HTTPS enforcement without requiring an on-the-wire header.",
+                            Severity.INFO,
+                            VulnerabilityCategory.SECURITY_HEADERS,
+                            "CWE-319",
+                            "Domain is natively preloaded in browser engines.",
+                            "Host verified in browser preload registry: " + host,
+                            targetUri.toString()
+                    ));
+                } else {
                     result.addVulnerability(new Vulnerability(
                             scan,
                             "Missing HTTP Strict Transport Security (HSTS) Header",
-                            "The web application does not enforce HSTS, which exposes users to man-in-the-middle (MITM) downgrade attacks and cookie hijacking.",
-                            Severity.MEDIUM,
+                            "The web application does not send an HSTS header, which is recommended to enforce HTTPS communication across modern browsers.",
+                            Severity.LOW,
                             VulnerabilityCategory.SECURITY_HEADERS,
                             "CWE-319",
                             "Add 'Strict-Transport-Security: max-age=31536000; includeSubDomains; preload' to all HTTPS responses.",
                             "Strict-Transport-Security header was not present in the HTTP response.",
-                            targetUri.toString()
-                    ));
-                } else if (!hsts.get().toLowerCase().contains("includesubdomains")) {
-                    result.addVulnerability(new Vulnerability(
-                            scan,
-                            "HSTS Header Missing 'includeSubDomains' Directive",
-                            "The HSTS header does not specify includeSubDomains, leaving subdomains vulnerable to insecure HTTP communication.",
-                            Severity.LOW,
-                            VulnerabilityCategory.SECURITY_HEADERS,
-                            "CWE-319",
-                            "Include 'includeSubDomains' in the Strict-Transport-Security header value.",
-                            "Strict-Transport-Security: " + hsts.get(),
                             targetUri.toString()
                     ));
                 }
@@ -91,47 +132,70 @@ public class HttpHeaderScanner implements ScannerModule {
 
             // 2. Content-Security-Policy (CSP)
             Optional<String> csp = headers.firstValue("content-security-policy");
-            if (csp.isEmpty()) {
-                result.addVulnerability(new Vulnerability(
-                        scan,
-                        "Missing Content-Security-Policy (CSP) Header",
-                        "The application lacks a Content-Security-Policy header, significantly increasing susceptibility to Cross-Site Scripting (XSS), data injection, and clickjacking attacks.",
-                        Severity.HIGH,
-                        VulnerabilityCategory.SECURITY_HEADERS,
-                        "CWE-693",
-                        "Configure a robust Content-Security-Policy header restricting script-src, style-src, default-src, and object-src directives.",
-                        "Content-Security-Policy header was absent in response.",
-                        targetUri.toString()
-                ));
-            } else {
+            Optional<String> cspReportOnly = headers.firstValue("content-security-policy-report-only");
+            boolean hasMetaCsp = lowerBody.contains("http-equiv=\"content-security-policy\"") || lowerBody.contains("http-equiv='content-security-policy'");
+
+            if (csp.isPresent()) {
                 String cspValue = csp.get().toLowerCase();
-                if (cspValue.contains("unsafe-inline") || cspValue.contains("unsafe-eval")) {
+                boolean hasNonceOrStrict = cspValue.contains("nonce-") || cspValue.contains("strict-dynamic") || cspValue.contains("sha256-");
+                // If nonce or strict-dynamic is present, browsers ignore unsafe-inline as safe fallback
+                if ((cspValue.contains("unsafe-inline") || cspValue.contains("unsafe-eval")) && !hasNonceOrStrict) {
                     result.addVulnerability(new Vulnerability(
                             scan,
                             "Insecure Directives in Content-Security-Policy (unsafe-inline / unsafe-eval)",
-                            "The CSP header allows 'unsafe-inline' or 'unsafe-eval', weakening protections against Cross-Site Scripting (XSS) attacks.",
-                            Severity.MEDIUM,
+                            "The CSP header allows 'unsafe-inline' or 'unsafe-eval' without cryptographic nonces or hashes, weakening protections against Cross-Site Scripting (XSS).",
+                            Severity.LOW,
                             VulnerabilityCategory.SECURITY_HEADERS,
                             "CWE-693",
-                            "Refactor inline scripts to external files and use cryptographic nonces or hashes instead of 'unsafe-inline'. Avoid 'unsafe-eval'.",
+                            "Use cryptographic nonces or hashes instead of 'unsafe-inline'. Avoid 'unsafe-eval'.",
                             "Content-Security-Policy: " + csp.get(),
                             targetUri.toString()
                     ));
                 }
+            } else if (cspReportOnly.isPresent()) {
+                result.addMetadata("cspReportOnlyActive", true);
+                result.addVulnerability(new Vulnerability(
+                        scan,
+                        "Content-Security-Policy Active in Report-Only Mode",
+                        "The application uses 'Content-Security-Policy-Report-Only' to validate and audit script execution policies without blocking client workflows.",
+                        Severity.INFO,
+                        VulnerabilityCategory.SECURITY_HEADERS,
+                        "CWE-693",
+                        "Promote tested report-only directives to an active enforcing Content-Security-Policy header.",
+                        "Content-Security-Policy-Report-Only: " + cspReportOnly.get(),
+                        targetUri.toString()
+                ));
+            } else if (hasMetaCsp) {
+                result.addMetadata("cspMetaTagPresent", true);
+            } else {
+                result.addVulnerability(new Vulnerability(
+                        scan,
+                        "Missing Content-Security-Policy (CSP) Header",
+                        "The application does not declare a Content-Security-Policy header. Configuring CSP provides valuable defense-in-depth against client-side injection attacks.",
+                        Severity.LOW,
+                        VulnerabilityCategory.SECURITY_HEADERS,
+                        "CWE-693",
+                        "Configure a Content-Security-Policy header restricting script-src, style-src, and object-src directives.",
+                        "Content-Security-Policy header was absent in response.",
+                        targetUri.toString()
+                ));
             }
 
             // 3. X-Frame-Options (Clickjacking)
             Optional<String> xfo = headers.firstValue("x-frame-options");
-            if (xfo.isEmpty() && (csp.isEmpty() || !csp.get().toLowerCase().contains("frame-ancestors"))) {
+            boolean hasFrameAncestors = (csp.isPresent() && csp.get().toLowerCase().contains("frame-ancestors"))
+                    || (cspReportOnly.isPresent() && cspReportOnly.get().toLowerCase().contains("frame-ancestors"));
+
+            if (xfo.isEmpty() && !hasFrameAncestors) {
                 result.addVulnerability(new Vulnerability(
                         scan,
                         "Missing Clickjacking Protection (X-Frame-Options)",
-                        "The web application does not set X-Frame-Options or frame-ancestors in CSP, allowing malicious sites to render this page inside an iframe and perform clickjacking.",
+                        "The web application does not set X-Frame-Options or CSP frame-ancestors, which may allow third-party sites to frame this interface.",
                         Severity.MEDIUM,
                         VulnerabilityCategory.SECURITY_HEADERS,
                         "CWE-1021",
-                        "Set 'X-Frame-Options: DENY' or 'X-Frame-Options: SAMEORIGIN', or use CSP 'frame-ancestors 'self''.",
-                        "Neither X-Frame-Options nor CSP frame-ancestors was provided.",
+                        "Set 'X-Frame-Options: SAMEORIGIN' or configure 'frame-ancestors 'self'' in CSP.",
+                        "Neither X-Frame-Options nor frame-ancestors directive was detected.",
                         targetUri.toString()
                 ));
             }
@@ -139,31 +203,51 @@ public class HttpHeaderScanner implements ScannerModule {
             // 4. X-Content-Type-Options (MIME Sniffing)
             Optional<String> xcto = headers.firstValue("x-content-type-options");
             if (xcto.isEmpty() || !xcto.get().equalsIgnoreCase("nosniff")) {
-                result.addVulnerability(new Vulnerability(
-                        scan,
-                        "Missing X-Content-Type-Options: nosniff Header",
-                        "Browsers may attempt MIME sniffing on responses with missing or invalid content type declarations, potentially leading to script execution.",
-                        Severity.LOW,
-                        VulnerabilityCategory.SECURITY_HEADERS,
-                        "CWE-79",
-                        "Set 'X-Content-Type-Options: nosniff' on all web server responses.",
-                        "X-Content-Type-Options header: " + xcto.orElse("None"),
-                        targetUri.toString()
-                ));
+                Optional<String> contentType = headers.firstValue("content-type");
+                boolean hasExplicitCharset = contentType.isPresent() && contentType.get().toLowerCase().contains("charset");
+
+                if (hasExplicitCharset) {
+                    result.addVulnerability(new Vulnerability(
+                            scan,
+                            "Missing 'X-Content-Type-Options: nosniff' (Mitigated by Explicit Charset)",
+                            "The response specifies an explicit Content-Type with charset, mitigating MIME sniffing. Adding 'X-Content-Type-Options: nosniff' is recommended as a best practice.",
+                            Severity.INFO,
+                            VulnerabilityCategory.SECURITY_HEADERS,
+                            "CWE-79",
+                            "Add 'X-Content-Type-Options: nosniff' to all server responses.",
+                            "Content-Type: " + contentType.orElse("None"),
+                            targetUri.toString()
+                    ));
+                } else {
+                    result.addVulnerability(new Vulnerability(
+                            scan,
+                            "Missing X-Content-Type-Options: nosniff Header",
+                            "Browsers may attempt MIME sniffing on ambiguous content types. Setting 'nosniff' prevents MIME-confusion attacks.",
+                            Severity.LOW,
+                            VulnerabilityCategory.SECURITY_HEADERS,
+                            "CWE-79",
+                            "Set 'X-Content-Type-Options: nosniff' on all web server responses.",
+                            "X-Content-Type-Options header: " + xcto.orElse("None"),
+                            targetUri.toString()
+                    ));
+                }
             }
 
-            // 5. Referrer-Policy
+            // 5. Referrer-Policy (Checks Header AND HTML Meta Tag)
             Optional<String> referrer = headers.firstValue("referrer-policy");
-            if (referrer.isEmpty()) {
+            boolean hasMetaReferrer = lowerBody.contains("name=\"referrer\"") || lowerBody.contains("name='referrer'")
+                    || lowerBody.contains("http-equiv=\"referrer-policy\"") || lowerBody.contains("http-equiv='referrer-policy'");
+
+            if (referrer.isEmpty() && !hasMetaReferrer) {
                 result.addVulnerability(new Vulnerability(
                         scan,
                         "Missing Referrer-Policy Header",
-                        "Without a Referrer-Policy, user navigating away may leak sensitive query parameters or URL path information in the Referer header.",
-                        Severity.LOW,
+                        "Without a Referrer-Policy declaration, outbound links may transmit full query URLs in the HTTP Referer header.",
+                        Severity.INFO,
                         VulnerabilityCategory.SECURITY_HEADERS,
                         "CWE-200",
-                        "Set 'Referrer-Policy: strict-origin-when-cross-origin' or 'no-referrer'.",
-                        "Referrer-Policy header was not set.",
+                        "Set 'Referrer-Policy: strict-origin-when-cross-origin' in HTTP headers or via HTML <meta>.",
+                        "Referrer-Policy was not set in headers or document metadata.",
                         targetUri.toString()
                 ));
             }
@@ -174,7 +258,7 @@ public class HttpHeaderScanner implements ScannerModule {
                 result.addVulnerability(new Vulnerability(
                         scan,
                         "Missing Permissions-Policy Header",
-                        "The application does not declare browser feature permissions (e.g. camera, microphone, geolocation), allowing embedded third-party frames to request sensitive device APIs.",
+                        "The application does not declare browser feature permissions (e.g. camera, microphone, geolocation) for embedded contexts.",
                         Severity.INFO,
                         VulnerabilityCategory.SECURITY_HEADERS,
                         "CWE-693",
@@ -190,11 +274,11 @@ public class HttpHeaderScanner implements ScannerModule {
                 result.addVulnerability(new Vulnerability(
                         scan,
                         "Web Server Version Disclosure in 'Server' Header",
-                        "The web server exposes detailed software and version information, assisting attackers in targeting known CVE vulnerabilities for that specific release.",
+                        "The web server exposes numerical software version details, assisting adversaries in fingerprinting known CVEs.",
                         Severity.LOW,
                         VulnerabilityCategory.SECURITY_HEADERS,
                         "CWE-200",
-                        "Configure the web server to suppress or obfuscate version details (e.g., ServerTokens Prod in Apache, server_tokens off in Nginx).",
+                        "Configure the web server to suppress or obfuscate version details.",
                         "Server: " + server.get(),
                         targetUri.toString()
                 ));
@@ -206,11 +290,11 @@ public class HttpHeaderScanner implements ScannerModule {
                 result.addVulnerability(new Vulnerability(
                         scan,
                         "Technology Stack Information Disclosure in 'X-Powered-By'",
-                        "The application discloses backend framework or language details (e.g., Express, PHP, ASP.NET) via the X-Powered-By header.",
+                        "The application discloses backend framework details via the X-Powered-By header.",
                         Severity.LOW,
                         VulnerabilityCategory.SECURITY_HEADERS,
                         "CWE-200",
-                        "Disable or remove the X-Powered-By header in application or framework configuration.",
+                        "Disable or remove the X-Powered-By header in application configuration.",
                         "X-Powered-By: " + poweredBy.get(),
                         targetUri.toString()
                 ));
