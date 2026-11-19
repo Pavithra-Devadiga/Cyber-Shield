@@ -49,7 +49,7 @@ export default function Sidebar({ unreadCount = 0 }) {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/dashboard'}
+              end
               className={({ isActive }) =>
                 `flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                   isActive
