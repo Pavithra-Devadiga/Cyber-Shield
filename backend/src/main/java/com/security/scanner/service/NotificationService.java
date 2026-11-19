@@ -66,18 +66,4 @@ public class NotificationService {
         dto.setCreatedAt(n.getCreatedAt());
         return dto;
     }
-
-    private User getCurrentUser() {
-        try {
-            var auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-                var found = userRepository.findByUsername(auth.getName());
-                if (found.isPresent()) return found.get();
-            }
-        } catch (Exception ignored) {}
-
-        return userRepository.findByUsername("analyst")
-                .or(() -> userRepository.findAll().stream().findFirst())
-                .orElseGet(() -> userRepository.save(new User("analyst", "analyst@cybershield.local", "password123", Role.ROLE_USER)));
-    }
 }

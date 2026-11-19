@@ -79,7 +79,7 @@ public class AuthService {
         return new AuthResponse(token, mapToDto(user));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserDto getCurrentUserProfile() {
         try {
             var auth = SecurityContextHolder.getContext().getAuthentication();

@@ -7,6 +7,7 @@ import com.security.scanner.dto.response.VulnerabilityDto;
 import com.security.scanner.entity.Scan;
 import com.security.scanner.entity.User;
 import com.security.scanner.entity.Vulnerability;
+import com.security.scanner.entity.enums.Role;
 import com.security.scanner.entity.enums.ScanStatus;
 import com.security.scanner.entity.enums.Severity;
 import com.security.scanner.exception.ResourceNotFoundException;
