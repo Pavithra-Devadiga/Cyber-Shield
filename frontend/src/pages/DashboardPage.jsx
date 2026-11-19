@@ -4,6 +4,7 @@ import api from '../api/client';
 import StatusBadge from '../components/common/StatusBadge';
 import ScoreGauge from '../components/common/ScoreGauge';
 import {
+  Shield,
   ShieldAlert,
   ShieldCheck,
   Activity,
