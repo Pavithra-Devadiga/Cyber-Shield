@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, ArrowRight, Check } from 'lucide-react';
+import { Shield, ArrowRight, GraduationCap } from 'lucide-react';
 
 export default function LandingPage() {
   return (
@@ -27,7 +27,7 @@ export default function LandingPage() {
         </Link>
       </header>
 
-      {/* Main Hero Viewport - Clean & Focused */}
+      {/* Main Hero Viewport - Clean, Focused & Centered */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 sm:px-8 py-8 lg:py-16 flex items-center">
         <section className="w-full relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-700 via-blue-600 to-sky-600 p-8 sm:p-12 lg:p-16 text-white shadow-2xl shadow-blue-950/80 border border-blue-400/30">
           {/* Subtle glowing ambient lights */}
@@ -69,52 +69,53 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Right Column: Aesthetic Glassmorphism Telemetry Card */}
-            <div className="lg:col-span-5 hidden lg:block">
-              <div className="p-7 rounded-3xl bg-blue-950/60 backdrop-blur-xl border border-white/20 shadow-2xl space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            {/* Right Column: Candidate Name & USN Credential Card */}
+            <div className="lg:col-span-5 flex justify-center lg:justify-end">
+              <div className="w-full max-w-md p-8 sm:p-10 rounded-3xl bg-blue-950/60 backdrop-blur-xl border border-white/20 shadow-2xl space-y-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-sky-400/10 rounded-full blur-2xl pointer-events-none" />
+
+                <div className="flex items-center justify-between pb-4 border-b border-white/10">
                   <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-sky-400/20 border border-sky-400/30 text-sky-300">
-                      <Shield className="w-5 h-5" />
+                    <div className="p-2.5 rounded-xl bg-sky-400/20 border border-sky-400/30 text-sky-300">
+                      <GraduationCap className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="font-bold text-sm text-white tracking-wide">Live Audit Telemetry</div>
-                      <div className="text-[10px] text-blue-200/70 font-mono">5 Non-Destructive Engines</div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200/70 block">
+                        Academic Project
+                      </span>
+                      <span className="text-xs font-bold text-white tracking-wide">
+                        Candidate Profile
+                      </span>
                     </div>
                   </div>
-                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[10px] font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    OPERATIONAL
+                  <span className="px-3 py-1 rounded-full bg-blue-900/60 border border-white/15 text-sky-300 text-[11px] font-bold">
+                    Evaluator Copy
                   </span>
                 </div>
 
-                {/* 5 Engine Diagnostic Indicators */}
-                <div className="space-y-2.5 font-mono text-xs">
-                  {[
-                    { name: 'SSL / TLS Verification', status: 'PASS', score: 'TLS 1.3 / 256-bit' },
-                    { name: 'Security Headers Check', status: 'EVAL', score: 'HSTS / CSP / X-Frame' },
-                    { name: 'SQL Injection Probes', status: 'SAFE', score: 'Input Boundary Logic' },
-                    { name: 'XSS Reflection Analysis', status: 'SAFE', score: 'DOM Sink Sanitization' },
-                    { name: 'Endpoint Exposure Audit', status: 'EVAL', score: '/.env & /.git Protection' },
-                  ].map((chk, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl bg-blue-900/40 border border-white/10 flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Check className="w-3.5 h-3.5 text-sky-300 shrink-0" />
-                        <span className="text-white text-[11px] font-sans font-semibold">{chk.name}</span>
-                      </div>
-                      <span className="text-[10px] text-sky-200 bg-blue-950/80 px-2 py-0.5 rounded border border-white/10">
-                        {chk.score}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-300/70 block">
+                      Student Name
+                    </span>
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
+                      Pavithra
+                    </h2>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-blue-900/40 border border-white/15 space-y-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-300/70 block">
+                      University Seat Number (USN)
+                    </span>
+                    <span className="font-mono text-xl sm:text-2xl font-black text-sky-300 tracking-wider block">
+                      U25UV24T064028
+                    </span>
+                  </div>
                 </div>
 
-                <div className="pt-2 flex items-center justify-between text-[11px] text-blue-200/80">
-                  <span>SSRF Safe Gateway</span>
-                  <span className="font-bold text-white">Non-Destructive Testing</span>
+                <div className="pt-2 flex items-center justify-between text-xs text-blue-200/70 border-t border-white/10">
+                  <span>CyberShield Audit Platform</span>
+                  <span className="font-semibold text-white">Final Evaluation</span>
                 </div>
               </div>
             </div>
