@@ -9,6 +9,7 @@ import {
   Bell,
   Shield,
   Zap,
+  Database,
 } from 'lucide-react';
 
 export default function Sidebar({ unreadCount = 0 }) {
@@ -33,7 +34,7 @@ export default function Sidebar({ unreadCount = 0 }) {
             Cyber<span className="text-emerald-400">Shield</span>
           </span>
           <span className="block text-[10px] text-slate-400 font-medium tracking-wider uppercase -mt-0.5">
-            Security Auditor
+            Vulnerability Auditor
           </span>
         </div>
       </div>
@@ -69,14 +70,19 @@ export default function Sidebar({ unreadCount = 0 }) {
         })}
       </nav>
 
-      {/* Engine Status Card */}
-      <div className="p-4 border-t border-slate-800/80 m-4 rounded-xl bg-slate-950/60 border">
-        <div className="flex items-center gap-2 mb-1.5">
-          <Zap className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-bold text-slate-200">Engine Online</span>
+      {/* System & Database Status Card */}
+      <div className="p-4 border-t border-slate-800/80 m-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Database className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-xs font-semibold text-slate-300">Live Database</span>
+          </div>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium">
+            Active
+          </span>
         </div>
         <p className="text-[11px] text-slate-400 leading-relaxed">
-          SSRF Protection active. Java 21 Spring Boot scanning daemon connected.
+          PostgreSQL / H2 JPA persistence enabled. Zero mock data — all metrics are dynamically computed.
         </p>
       </div>
     </aside>

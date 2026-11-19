@@ -44,7 +44,7 @@ public class DashboardController {
         dto.setActiveScans(activeScans);
         dto.setCompletedScans(completedScans);
         dto.setFailedScans(failedScans);
-        dto.setAverageSecurityScore(avgScore != null ? Math.round(avgScore * 10.0) / 10.0 : 100.0);
+        dto.setAverageSecurityScore(avgScore != null ? Math.round(avgScore * 10.0) / 10.0 : null);
         dto.setTotalVulnerabilities(totalVulns);
 
         // Group by severity

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
 import {
   ShieldAlert,
@@ -15,8 +15,9 @@ import {
 
 export default function NewScanPage() {
   const navigate = useNavigate();
-  const [targetUrl, setTargetUrl] = useState('');
-  const [scanType, setScanType] = useState('FULL');
+  const location = useLocation();
+  const [targetUrl, setTargetUrl] = useState(location.state?.targetUrl || '');
+  const [scanType, setScanType] = useState(location.state?.scanType || 'FULL');
   const [selectedModules, setSelectedModules] = useState([
     'HEADERS',
     'SSL',

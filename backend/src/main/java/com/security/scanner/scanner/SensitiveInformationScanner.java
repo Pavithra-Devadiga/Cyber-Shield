@@ -46,7 +46,7 @@ public class SensitiveInformationScanner implements ScannerModule {
     private static final Pattern GENERIC_SECRET_PATTERN = Pattern.compile("(?i)(api[_-]?key|secret[_-]?key|access[_-]?token|auth[_-]?token)\\s*[:=]\\s*['\"]([a-zA-Z0-9_\\-]{16,})['\"]");
     private static final Pattern DB_URI_PATTERN = Pattern.compile("(jdbc:[a-zA-Z0-9]+://|mongodb(\\+srv)?://|postgres(ql)?://)[^\\s'\"<>]+");
     private static final Pattern STACK_TRACE_PATTERN = Pattern.compile("(?i)(java\\.lang\\.[a-zA-Z]+Exception|Traceback \\(most recent call last\\)|org\\.springframework\\.[a-zA-Z.]+|at [a-zA-Z0-9_.$]+\\([a-zA-Z0-9_.]+\\.java:\\d+\\))");
-    private static final Pattern INTERNAL_IP_PATTERN = Pattern.compile("\\b(10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|192\\.168\\.\\d{1,3}\\.\\d{1,3}|172\\.(1[6-9]|2[0-9]|3[0-1])\\.\\d{1,3}\\.\\d{1,3})\\b");
+    private static final Pattern INTERNAL_IP_PATTERN = Pattern.compile("(?<![0-9.])(?:10(?:\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}|192\\.168(?:\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){2}|172\\.(?:1[6-9]|2[0-9]|3[0-1])(?:\\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){2})(?![0-9.])");
 
     @Override
     public ScannerResult scan(URI targetUri, Scan scan) {

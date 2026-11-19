@@ -18,6 +18,8 @@ public interface ScanRepository extends JpaRepository<Scan, Long> {
 
     Page<Scan> findByUserOrderByCreatedAtDesc(User user, Pageable pageable);
 
+    Page<Scan> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
     List<Scan> findByStatus(ScanStatus status);
 
     @Query("SELECT s FROM Scan s ORDER BY s.createdAt DESC")
