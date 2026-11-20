@@ -13,7 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/scans")
+@RequestMapping({"/api/scans", "/scans"})
 public class ScanController {
 
     private final ScanService scanService;

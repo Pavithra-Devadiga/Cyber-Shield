@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/dashboard")
+@RequestMapping({"/api/dashboard", "/dashboard-api", "/dashboard"})
 public class DashboardController {
 
     private final ScanRepository scanRepository;

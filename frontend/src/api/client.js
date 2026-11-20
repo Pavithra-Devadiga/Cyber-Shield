@@ -1,7 +1,18 @@
 import axios from 'axios';
 
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+const cleanBaseUrl = (() => {
+  let url = (rawBaseUrl || '').trim().replace(/\/+$/, '');
+  if (!url) return '/api';
+  // Ensure the base URL ends with /api even if configured without it (e.g. https://my-backend.onrender.com)
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
+  }
+  return url;
+})();
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: cleanBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },
